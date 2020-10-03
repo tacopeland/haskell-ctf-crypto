@@ -14,11 +14,16 @@ instance Num ZmodN where
     fromInteger n               = ZmodN 0 n
     negate (ZmodN a n)          = ZmodN ((n - a) `mod` n) n
 
+
 --bareInteger :: ZmodN -> Integer
 bareInteger (ZmodN a n) = a
 
+--modulus :: (Integral a) => ZmodN -> a
+modulus (ZmodN a n) = n
+
 --ofIntegral (Integral a) => a -> a -> ZmodN
 ofIntegral a n = ZmodN (a `mod` n) n
+
 
 --modsquares :: ZmodN -> [ZmodN]
 modsquares n = iterate (\x -> x*x) n
@@ -26,11 +31,6 @@ modsquares n = iterate (\x -> x*x) n
 --pow :: (Integral a) => ZmodN -> a -> ZmodN
 pow n x = foldr (*) identity (zipWith (\(ZmodN a mod) e -> ofIntegral (a^e) mod) (modsquares n) (binexpand x))
     where identity = ZmodN 1 (modulus n)
-
---modulus :: (Integral a) => ZmodN -> a
-modulus (ZmodN a n) = n
-
-
 
 --gcd' :: (Integral a) => a -> a -> a
 gcd' a 0 = a
@@ -93,5 +93,12 @@ bsgs g h ord =
                 where getInd = elemIndex match
                       val = (+) <$> (getInd bstep) <*> ((n*) <$> (getInd gstep))
 
-
-
+crt :: [ZmodN] -> Maybe ZmodN
+crt []       = Nothing
+crt (a:[])   = Just a
+crt (a:b:cs) =
+    let 
+        y = (*) <$> Just (b - (ofIntegral (bareInteger a) (modulus b))) <*> modinv (ofIntegral (modulus a) (modulus b))
+    in case y of
+        Nothing           -> Nothing
+        Just (ZmodN x _)  -> crt (ofIntegral (bareInteger a + modulus a * x) (modulus a * modulus b) : cs)
