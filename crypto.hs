@@ -1,6 +1,8 @@
 import Data.List
 import Data.Maybe
 
+import Debug.Trace
+
 
 data ZmodN = ZmodN Integer Integer
     deriving (Show, Eq)
@@ -74,7 +76,9 @@ mulmod (x:xs) m = Just (ofIntegral (toInteger x * p) m)
 -- |Order (naive)
 order :: ZmodN -> Maybe ZmodN
 order (ZmodN 0 _) = Nothing
-order n           = Just (ofIntegral (toInteger index + 1) (modulus n))
+order n
+    | gcd (bareInteger n) (modulus n) /= 1 = Nothing
+    | otherwise = Just (ofIntegral (toInteger index + 1) (modulus n))
     where Just index = elemIndex identity (iterate (*n) n)
           identity = ofIntegral 1 (modulus n)
 
@@ -110,3 +114,38 @@ crt (a:b:cs) =
     in case y of
         Nothing          -> Nothing
         Just (ZmodN x _) -> crt (ofIntegral (bareInteger a + modulus a * x) (modulus a * modulus b) : cs)
+
+-- |Algorithm to reduce discrete logarithm for an element with prime power order
+logreduce :: (Integral a) => ZmodN -> ZmodN -> ZmodN -> a -> Maybe ZmodN
+logreduce g h base exp
+    | exp <= 0  = Nothing
+    | otherwise =
+    let
+        -- (g^base^(exp-1)^x_n = (h*g^(-x))^(exp-1-n)
+        -- (m^x_n = (h * g^(-x)) ^ (exp-1-n)
+        base_i      = bareInteger base
+        pow_pow a b = pow a (base_i ^ b)
+        negpow x    = pow g (-x)
+        Just m      = pow_pow g (exp-1)
+
+        x_n 0 = do
+                b             <- pow_pow h (exp-1)
+                bsgs m b base
+        x_n n = do
+                ZmodN prevx _ <- x_n (n-1)
+                rterm         <- negpow (prevx)
+                b             <- pow_pow (h * rterm) (exp-1-n)
+                ZmodN xn _    <- bsgs m b base
+                Just $ (ZmodN xn (base_i ^ (n+1))) * (ZmodN (base_i ^ n) (base_i ^ (n+1))) + (ZmodN prevx (base_i ^ (n+1)))
+                
+    in
+        x_n (exp - 1)
+
+
+pohlig_hellman :: ZmodN -> ZmodN -> [(Integer, Integer)] -> Maybe ZmodN
+--pohlig_hellman g h factors = crt $ helper g h factors
+pohlig_hellman g h factors = crt $ foldr (\x acc -> subproblem g h x : acc) [] factors
+    where
+        ord                    = foldr (\x acc -> acc * ((fst x)^(snd x))) 1 factors
+        tmp t (q,e)            = fromJust $ pow t (ord `div` (q^e))
+        subproblem a b x@(q,e) = fromJust $ logreduce (tmp a x) (tmp b x) (ZmodN q (modulus a)) e
