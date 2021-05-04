@@ -10,54 +10,40 @@ import Data.Maybe
 import Debug.Trace
 
 
-mulmod :: (Integral a) => [a] -> a -> Maybe ZmodN
-mulmod [] _ = Nothing
-mulmod (x:[]) m = Just (ofIntegral x m)
-mulmod (x:xs) m = Just (ofIntegral (toInteger x * p) m)
-    where Just (ZmodN p _) = mulmod xs m
+babystep :: (Group a) => a -> [a]
+babystep n = iterate (gcompose n) (gid n)
 
--- |Finds the order of an element in its group (naive)
-order :: ZmodN -> Maybe ZmodN
-order (ZmodN 0 _) = Nothing
-order n
-    | gcd (bareInteger n) (modulus n) /= 1 = Nothing
-    | otherwise = Just (ofIntegral (toInteger index + 1) (modulus n))
-    where Just index = elemIndex identity (iterate (gcompose n) n)
-          identity = ofIntegral 1 (modulus n)
-
-babystep :: ZmodN -> [ZmodN]
-babystep n = iterate (gcompose n) (ofIntegral 1 (modulus n))
-
-giantstep :: ZmodN -> ZmodN -> [ZmodN]
+giantstep :: (Group a) => a -> a -> [a]
 giantstep h u = iterate (gcompose u) h
 
 -- |Shanks' Baby-Step Giant-Step discrete logarithm algorithm
-bsgs :: ZmodN -> ZmodN -> ZmodN -> Maybe ZmodN
+--bsgs :: (Integral b, Group a) => a -> a -> b -> Maybe Int
 bsgs g h ord =
     let 
-        n = (floor . sqrt. fromIntegral) (bareInteger ord) + 1
+        n = (floor . sqrt . fromIntegral) ord + 1
         u = gpow g (-n)
         bstep = take n $ babystep g
         gstep
             | u == Nothing = []
             | otherwise    = take n $ giantstep h (fromJust u)
+    -- Get the output from this match
     in case intersect bstep gstep of
         [] -> Nothing
-        (match:_) -> flip ofIntegral (bareInteger ord) <$> (toInteger <$> bare_int) 
+        (match:_) -> val
             where getInd = elemIndex match
                   val = (+) <$> (getInd bstep) <*> ((n*) <$> (getInd gstep))
-                  bare_int = flip mod (fromIntegral $ bareInteger ord) <$> val
 
 crt :: [ZmodN] -> Maybe ZmodN
 crt []       = Nothing
 crt (a:[])   = Just a
 crt (a:b:cs) =
     let 
-        y = rmul <$> Just (b `rsub` (ofIntegral (bareInteger a) (modulus b))) <*> modinv (ofIntegral (modulus a) (modulus b))
+        y = rmul <$> Just (b `rsub` (ofIntegral (zmodn_bareInteger a) (modulus b))) <*> rinv (ofIntegral (modulus a) (modulus b))
     in case y of
         Nothing          -> Nothing
-        Just (ZmodN x _) -> crt (ofIntegral (bareInteger a + modulus a * x) (modulus a * modulus b) : cs)
+        Just (ZmodN x _) -> crt (ofIntegral (zmodn_bareInteger a + modulus a * x) (modulus a * modulus b) : cs)
 
+    {-
 -- |Algorithm to reduce discrete logarithm for an element with prime power order
 logreduce :: (Integral a) => ZmodN -> ZmodN -> ZmodN -> a -> Maybe ZmodN
 logreduce g h base exp
@@ -66,9 +52,9 @@ logreduce g h base exp
     let
         -- (g^base^(exp-1)^x_n = (h*g^(-x))^(exp-1-n)
         -- (m^x_n = (h * g^(-x)) ^ (exp-1-n)
-        base_i      = bareInteger base
-        pow_pow a b = pow a (base_i ^ b)
-        negpow x    = pow g (-x)
+        base_i      = zmodn_bareInteger base
+        pow_pow a b = gpow a (base_i ^ b)
+        negpow x    = gpow g (-x)
         Just m      = pow_pow g (exp-1)
 
         x_n 0 = do
@@ -89,5 +75,6 @@ pohlig_hellman :: ZmodN -> ZmodN -> [(Integer, Integer)] -> Maybe ZmodN
 pohlig_hellman g h factors = crt $ foldr (\x acc -> subproblem g h x : acc) [] factors
     where
         ord                    = foldr (\x acc -> acc * ((fst x)^(snd x))) 1 factors
-        tmp t (q,e)            = fromJust $ pow t (ord `div` (q^e))
+        tmp t (q,e)            = fromJust $ gpow t (ord `div` (q^e))
         subproblem a b x@(q,e) = fromJust $ logreduce (tmp a x) (tmp b x) (ZmodN q (modulus a)) e
+-}
