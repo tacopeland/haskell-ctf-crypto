@@ -1,0 +1,26 @@
+module Crypto.Ring where
+
+import Data.List
+
+class Ring a where
+    radd, rmul :: a -> a -> a
+    rneg :: a -> a
+    rpow :: (Integral i) => a -> i -> Maybe a
+    rinv :: a -> Maybe a
+
+class (Ring a) => IntegralDomain a where
+    rid :: a -- Use with rid :: Z or something
+
+-- Integer ring
+data Z = Z Integer
+    deriving (Show, Eq)
+
+instance Ring Z where
+    radd (Z a) (Z b) = Z (a + b)
+    rmul (Z a) (Z b) = Z (a * b)
+    rneg (Z a) = (Z (-a))
+    rpow (Z a) b     = Just (Z (a ^ b))
+    rinv (Z a)       = if (a == 0) || (a == 1) then Just (Z a) else Nothing
+
+instance IntegralDomain Z where
+    rid              = (Z 1)

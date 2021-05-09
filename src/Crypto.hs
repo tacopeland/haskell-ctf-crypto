@@ -2,6 +2,7 @@ module Crypto where
 
 import Crypto.Group
 import Crypto.Ring
+import Crypto.QuotientRing
 import Crypto.Field
 
 import Data.List
@@ -32,7 +33,8 @@ bsgs g h ord =
                   val = (+) <$> (getInd bstep) <*> ((n*) <$> (getInd gstep))
 
     {-
-crt :: [ZmodN] -> Maybe ZmodN
+-- Need to make some quotient rings for this
+crt :: (Ring a) => [a] -> Maybe a
 crt []       = Nothing
 crt (a:[])   = Just a
 crt (a:b:cs) =
@@ -41,6 +43,7 @@ crt (a:b:cs) =
     in case y of
         Nothing          -> Nothing
         Just (ZmodN x _) -> crt (ofIntegral (zmodn_asInteger a + modulus a * x) (modulus a * modulus b) : cs)
+
 
 -- |Algorithm to reduce discrete logarithm for an element with prime power order
 logreduce :: (Integral a) => ZmodN -> ZmodN -> ZmodN -> a -> Maybe ZmodN
