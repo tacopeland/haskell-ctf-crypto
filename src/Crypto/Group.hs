@@ -36,7 +36,7 @@ zmodp_pow n x
             where leftover = binexpand $ a `div` 2
 
 zmodp_modinv :: ZmodP -> ZmodP
-zmodp_modinv (ZmodP a p) = ZmodP x p
+zmodp_modinv (ZmodP a p) = ZmodP (x `mod` p) p
     where (_, x, _) = xgcd a p
 
 
@@ -50,4 +50,4 @@ instance Group ZmodN where
         | otherwise = error "Conflicting moduli in gcompose"
     gpow (ZmodN a n) e = (ZmodN ((a * (fromIntegral e)) `mod` n) n)
     ginv (ZmodN a n) = (ZmodN ((-a) `mod` n) n)
-    gid (ZmodN _ p) = ZmodN 1 p
+    gid (ZmodN _ p) = ZmodN 0 p

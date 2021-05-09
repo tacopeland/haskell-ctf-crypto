@@ -19,8 +19,12 @@ instance Ring Z where
     radd (Z a) (Z b) = Z (a + b)
     rmul (Z a) (Z b) = Z (a * b)
     rneg (Z a) = (Z (-a))
-    rpow (Z a) b     = Just (Z (a ^ b))
-    rinv (Z a)       = if (a == 0) || (a == 1) then Just (Z a) else Nothing
+    rpow (Z a) b
+      | a == -1 = Just $ Z (if (even b) then 1 else (-1))
+      | a == 1 && b == -1 = Just $ Z 1
+      | (b >= 0) = Just (Z (a ^ b))
+      | otherwise = Nothing
+    rinv (Z a)       = if (a == -1) || (a == 1) then Just (Z a) else Nothing
 
 instance IntegralDomain Z where
     rid              = (Z 1)
