@@ -1,5 +1,8 @@
 module Crypto.Group where
 
+import Data.List
+import Data.Maybe
+
 import Crypto.Integers
 
 class Group a where
@@ -7,6 +10,11 @@ class Group a where
     gpow :: (Integral i) => a -> i -> a
     ginv :: a -> a
     gid :: a -> a
+
+class FiniteGroup a where
+    gorder :: a -> Integer
+
+class AbelianGroup a where
 
 data ZmodP = ZmodP Integer Integer
     deriving (Show, Eq)
@@ -39,6 +47,12 @@ zmodp_modinv :: ZmodP -> ZmodP
 zmodp_modinv (ZmodP a p) = ZmodP (x `mod` p) p
     where (_, x, _) = xgcd a p
 
+instance FiniteGroup ZmodP where
+    -- NAIVE
+    gorder n = toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)
+
+instance AbelianGroup ZmodP where
+
 
 data ZmodN = ZmodN Integer Integer
     deriving (Show, Eq)
@@ -51,3 +65,8 @@ instance Group ZmodN where
     gpow (ZmodN a n) e = (ZmodN ((a * (fromIntegral e)) `mod` n) n)
     ginv (ZmodN a n) = (ZmodN ((-a) `mod` n) n)
     gid (ZmodN _ p) = ZmodN 0 p
+
+instance FiniteGroup ZmodN where
+    gorder n = toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)
+
+instance AbelianGroup ZmodN where

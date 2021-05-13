@@ -8,8 +8,10 @@ class Ring a where
     rpow :: (Integral i) => a -> i -> Maybe a
     rinv :: a -> Maybe a
 
-class (Ring a) => IntegralDomain a where
+class (Ring a) => IdentityRing a where
     rid :: a -- Use with rid :: Z or something
+
+class (Ring a) => CommutativeRing a where
 
 -- Integer ring
 data Z = Z Integer
@@ -26,5 +28,7 @@ instance Ring Z where
       | otherwise = Nothing
     rinv (Z a)       = if (a == -1) || (a == 1) then Just (Z a) else Nothing
 
-instance IntegralDomain Z where
+instance IdentityRing Z where
     rid              = (Z 1)
+
+instance CommutativeRing Z where

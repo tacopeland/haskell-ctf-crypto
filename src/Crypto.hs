@@ -11,16 +11,12 @@ import Data.Maybe
 import Debug.Trace
 
 
-babystep :: (Group a) => a -> [a]
-babystep n = iterate (gcompose n) (gid n)
-
-giantstep :: (Group a) => a -> a -> [a]
-giantstep h u = iterate (gcompose u) h
-
 -- |Shanks' Baby-Step Giant-Step discrete logarithm algorithm
-bsgs :: (Integral b, Group a, Eq a) => a -> a -> b -> Maybe Int
+bsgs :: (Integral b, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> b -> Maybe Int
 bsgs g h ord =
     let 
+        babystep n = iterate (gcompose n) (gid n)
+        giantstep h u = iterate (gcompose u) h
         n = (floor . sqrt . fromIntegral) ord + 1
         u = gpow g (-n)
         bstep = take n $ babystep g
@@ -32,19 +28,22 @@ bsgs g h ord =
             where getInd = elemIndex match
                   val = (+) <$> (getInd bstep) <*> ((n*) <$> (getInd gstep))
 
-    {-
 -- Need to make some quotient rings for this
-crt :: (Ring a) => [a] -> Maybe a
+crt :: [ZnZ] -> Maybe ZnZ
 crt []       = Nothing
 crt (a:[])   = Just a
 crt (a:b:cs) =
     let 
-        y = rmul <$> Just (b `rsub` (ofIntegral (zmodn_asInteger a) (modulus b))) <*> rinv (ofIntegral (modulus a) (modulus b))
+        p = (qrelement a) 
+        q = (qrideal a)
+        r = (qrelement b)
+        s = (qrideal b)
+        y = rmul <$> (Just ((qrcoerce r s :: ZnZ) `radd` (rneg (qrcoerce p s :: ZnZ)))) <*> (rinv (qrcoerce q s :: ZnZ))
     in case y of
         Nothing          -> Nothing
-        Just (ZmodN x _) -> crt (ofIntegral (zmodn_asInteger a + modulus a * x) (modulus a * modulus b) : cs)
+        Just ans -> crt (qrcoerce (p `radd` (q `rmul` (qrelement ans))) (q `rmul` s) : cs)
 
-
+    {-
 -- |Algorithm to reduce discrete logarithm for an element with prime power order
 logreduce :: (Integral a) => ZmodN -> ZmodN -> ZmodN -> a -> Maybe ZmodN
 logreduce g h base exp
