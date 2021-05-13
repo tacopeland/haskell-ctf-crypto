@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Crypto.QuotientRing where
 
@@ -8,10 +10,10 @@ import Data.List
 import Data.Maybe
 
 
-class Ring a => QuotientRing a where
-    qrelement :: a -> Z
-    qrideal :: a -> Z
-    qrcoerce :: Z -> Z -> a
+class (Ring a, Ring b) => QuotientRing a b | a -> b where
+    qrelement :: a -> b
+    qrideal :: a -> b
+    qrcoerce :: b -> b -> a
 
 
 -- Z/nZ
@@ -29,7 +31,7 @@ instance Ring ZnZ where
     rpow                   = znz_pow
     rinv                   = znz_modinv
 
-instance QuotientRing ZnZ where
+instance QuotientRing ZnZ Z where
     qrelement (ZnZ x _)  = x
     qrideal (ZnZ _ i)    = i
     -- Coercing into a quotient ring is how we take an element modulo an ideal

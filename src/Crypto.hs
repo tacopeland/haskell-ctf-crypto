@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Crypto where
 
 import Crypto.Group
@@ -29,16 +30,19 @@ bsgs g h ord =
                   val = (+) <$> (getInd bstep) <*> ((n*) <$> (getInd gstep))
 
 -- Need to make some quotient rings for this
-crt :: [ZnZ] -> Maybe ZnZ
+crt :: forall a b . (Ring a, Ring b, (QuotientRing a b)) => [a] -> Maybe a
 crt []       = Nothing
-crt (a:[])   = Just a
-crt (a:b:cs) =
+crt (aa:[])   = Just aa
+crt (aa:bb:cs) =
     let 
-        p = (qrelement a) 
-        q = (qrideal a)
-        r = (qrelement b)
-        s = (qrideal b)
-        y = rmul <$> (Just ((qrcoerce r s :: ZnZ) `radd` (rneg (qrcoerce p s :: ZnZ)))) <*> (rinv (qrcoerce q s :: ZnZ))
+        p = (qrelement aa) 
+        q = (qrideal aa)
+        r = (qrelement bb)
+        s = (qrideal bb)
+        t = (qrcoerce r s) :: a
+        u = (qrcoerce p s) :: a
+        v = (qrcoerce q s) :: a
+        y = rmul <$> (Just (t `radd` (rneg u))) <*> (rinv v)
     in case y of
         Nothing          -> Nothing
         Just ans -> crt (qrcoerce (p `radd` (q `rmul` (qrelement ans))) (q `rmul` s) : cs)
