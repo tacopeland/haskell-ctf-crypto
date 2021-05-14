@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1924afb50df47b4a3bd4754668a4a7974774cbb1cccc37d6e472bbfba3aa7847
+-- hash: 805a20ee88922d17eec5a421369ae4d051ed8c4ce522e4f0067ed7f3eb6b9852
 
 name:           haskell-ctf-crypto
 version:        0.1.0.0
@@ -28,7 +28,7 @@ source-repository head
 library
   exposed-modules:
       Crypto
-      Crypto.Field
+      Crypto.Domain
       Crypto.Group
       Crypto.Integers
       Crypto.QuotientRing

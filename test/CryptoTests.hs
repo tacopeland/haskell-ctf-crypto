@@ -8,6 +8,8 @@ import Data.Maybe
 
 import Crypto.Group
 import Crypto.Ring
+import Crypto.Domain
+import Crypto.QuotientRing
 import Crypto
 
 -- https://stackoverflow.com/a/5055626
@@ -142,6 +144,61 @@ prop_ZIdentity x =
         (rid n) `rmul` n == n &&
         n `rmul` (rid n) == n
 
+-- ZnZ
+prop_ZnZAddIdentity :: Integer -> Positive Integer -> Bool
+prop_ZnZAddIdentity x' (Positive n) =
+    let x = x' `mod` n
+        a = ZnZ (Z x) (Z n)
+     in a `radd` (rzero a) == (rzero a) `radd` a &&
+         a `radd` (rzero a) == a
+
+prop_ZnZMulIdentity :: Integer -> Positive Integer -> Bool
+prop_ZnZMulIdentity x' (Positive n) =
+    let x = x' `mod` n
+        a = ZnZ (Z x) (Z n)
+     in a `rmul` (rid a) == (rid a) `rmul` a &&
+         a `rmul` (rid a) == a
+
+prop_ZnZAddAssociative :: Integer -> Integer -> Integer -> Positive Integer -> Bool
+prop_ZnZAddAssociative x' y' z' (Positive n) =
+    let a = qrcoerce (Z x') (Z n) :: ZnZ
+        b = qrcoerce (Z y') (Z n) :: ZnZ
+        c = qrcoerce (Z z') (Z n) :: ZnZ
+     in ((a `radd` b) `radd` c) == (a `radd` (b `radd` c))
+
+prop_ZnZMulAssociative :: Integer -> Integer -> Integer -> Positive Integer -> Bool
+prop_ZnZMulAssociative x' y' z' (Positive n) =
+    let a = qrcoerce (Z x') (Z n) :: ZnZ
+        b = qrcoerce (Z y') (Z n) :: ZnZ
+        c = qrcoerce (Z z') (Z n) :: ZnZ
+     in ((a `rmul` b) `rmul` c) == (a `rmul` (b `rmul` c))
+
+prop_ZnZAddCommutative :: Integer -> Integer -> Positive Integer -> Bool
+prop_ZnZAddCommutative x' y' (Positive n) =
+    let a = qrcoerce (Z x') (Z n) :: ZnZ
+        b = qrcoerce (Z y') (Z n) :: ZnZ
+     in a `radd` b == b `radd` a
+
+prop_ZnZMulCommutative :: Integer -> Integer -> Positive Integer -> Bool
+prop_ZnZMulCommutative x' y' (Positive n) =
+    let a = qrcoerce (Z x') (Z n) :: ZnZ
+        b = qrcoerce (Z y') (Z n) :: ZnZ
+     in a `rmul` b == b `rmul` a
+
+prop_ZnZAddInverse :: Integer -> Positive Integer -> Bool
+prop_ZnZAddInverse x' (Positive n) =
+    let a = qrcoerce (Z x') (Z n) :: ZnZ
+     in a `radd` (rneg a) == (rneg a) `radd` a &&
+         a `radd` (rneg a) == rzero a
+
+prop_ZnZDistributive :: Integer -> Integer -> Integer -> Positive Integer -> Bool
+prop_ZnZDistributive x' y' z' (Positive n) =
+    let a = qrcoerce (Z x') (Z n) :: ZnZ
+        b = qrcoerce (Z y') (Z n) :: ZnZ
+        c = qrcoerce (Z z') (Z n) :: ZnZ
+     in a `rmul` (b `radd` c) == (a `rmul` b) `radd` (a `rmul` c)
+
+-- BSGS
 prop_bsgsZmodP :: BSGSZmodP -> Bool
 prop_bsgsZmodP (BSGSZmodP (g@(ZmodP _ p), h, order)) =
     let res = bsgs g h order in
@@ -156,6 +213,18 @@ prop_bsgsZmodN (BSGSZmodN (g@(ZmodN _ n), h, order)) =
            then (if order /= n then True else False)
            else (gpow g (fromJust res)) == h
 
+-- Pohlig-Hellman (I'll make more tests when I have a factorization routine)
+prop_logreduceZmodP :: BSGSZmodP -> Bool
+prop_logreduceZmodP (BSGSZmodP (g, h, order)) =
+    let res1 = logreduce g h order 1
+        res2 = bsgs g h order
+     in res1 == res2
+
+prop_logreduceZmodN :: BSGSZmodN -> Bool
+prop_logreduceZmodN (BSGSZmodN (g, h, order)) =
+    let res1 = logreduce g h order 1
+        res2 = bsgs g h order
+     in res1 == res2
 
 
 return []

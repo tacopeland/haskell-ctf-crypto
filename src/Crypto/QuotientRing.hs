@@ -33,6 +33,9 @@ instance Ring ZnZ where
     rpow                   = znz_pow
     rinv                   = znz_modinv
 
+instance IdentityRing ZnZ where
+    rid (ZnZ _ n) = ZnZ (Z 1) n
+
 instance QuotientRing ZnZ Z where
     qrelement a          = element a
     qrideal a            = ideal a
