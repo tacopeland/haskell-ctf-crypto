@@ -3,13 +3,14 @@ module Crypto.Ring where
 import Data.List
 
 class Ring a where
+    rzero :: a -> a
     radd, rmul :: a -> a -> a
     rneg :: a -> a
     rpow :: (Integral i) => a -> i -> Maybe a
     rinv :: a -> Maybe a
 
 class (Ring a) => IdentityRing a where
-    rid :: a -- Use with rid :: Z or something
+    rid :: a -> a -- Use with rid :: Z or something
 
 class (Ring a) => CommutativeRing a where
 
@@ -18,6 +19,7 @@ data Z = Z Integer
     deriving (Show, Eq)
 
 instance Ring Z where
+    rzero _ = (Z 0)
     radd (Z a) (Z b) = Z (a + b)
     rmul (Z a) (Z b) = Z (a * b)
     rneg (Z a) = (Z (-a))
@@ -29,6 +31,6 @@ instance Ring Z where
     rinv (Z a)       = if (a == -1) || (a == 1) then Just (Z a) else Nothing
 
 instance IdentityRing Z where
-    rid              = (Z 1)
+    rid _            = (Z 1)
 
 instance CommutativeRing Z where

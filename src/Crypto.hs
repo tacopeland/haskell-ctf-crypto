@@ -4,7 +4,6 @@ module Crypto where
 import Crypto.Group
 import Crypto.Ring
 import Crypto.QuotientRing
-import Crypto.Field
 
 import Data.List
 import Data.Maybe
@@ -12,24 +11,26 @@ import Data.Maybe
 import Debug.Trace
 
 
--- |Shanks' Baby-Step Giant-Step discrete logarithm algorithm
-bsgs :: (Integral b, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> b -> Maybe Int
-bsgs g h ord =
+-- |Shanks' Baby-Step Giant-Step discrete logarithm algorithm.
+bsgs :: (Integral b, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> b -> Maybe Int
+bsgs g h ord
+  | g == h = Just 1
+  | otherwise =
     let 
+        n = 1 + (floor . sqrt . fromIntegral) ord
+        u = gpow g (-n)
         babystep n = iterate (gcompose n) (gid n)
         giantstep h u = iterate (gcompose u) h
-        n = (floor . sqrt . fromIntegral) ord + 1
-        u = gpow g (-n)
         bstep = take n $ babystep g
         gstep = take n $ giantstep h u
     -- Get the output from this match
     in case intersect bstep gstep of
         [] -> Nothing
-        (match:_) -> val
+        (match:_) -> mod <$> val <*> (Just (fromIntegral ord))
             where getInd = elemIndex match
                   val = (+) <$> (getInd bstep) <*> ((n*) <$> (getInd gstep))
 
--- Need to make some quotient rings for this
+-- |Solver for the Chinese Remainder Theorem, given a list of quotient ring elements.
 crt :: forall a b . (Ring a, Ring b, (QuotientRing a b)) => [a] -> Maybe a
 crt []       = Nothing
 crt (aa:[])   = Just aa
@@ -47,38 +48,39 @@ crt (aa:bb:cs) =
         Nothing          -> Nothing
         Just ans -> crt (qrcoerce (p `radd` (q `rmul` (qrelement ans))) (q `rmul` s) : cs)
 
-    {-
--- |Algorithm to reduce discrete logarithm for an element with prime power order
-logreduce :: (Integral a) => ZmodN -> ZmodN -> ZmodN -> a -> Maybe ZmodN
-logreduce g h base exp
-    | exp <= 0  = Nothing
-    | otherwise =
+-- | Given a list of residues and a list of moduli, get the CRT
+crt_list :: (Integral a, Integral b) => [a] -> [b] -> Maybe ZnZ
+crt_list a b = crt (zipWith (\x y -> ZnZ (Z $ fromIntegral x) (Z $ fromIntegral y)) a b)
+
+-- |Algorithm to reduce discrete logarithm for an element with prime power order.
+logreduce :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a, Integral b, Integral c) => a -> a -> b -> c -> Maybe Int
+logreduce g h q e =
     let
-        -- (g^base^(exp-1)^x_n = (h*g^(-x))^(exp-1-n)
+        -- (g^q^(exp-1)^x_n = (h*g^(-x))^(exp-1-n)
         -- (m^x_n = (h * g^(-x)) ^ (exp-1-n)
-        base_i      = zmodn_asInteger base
-        pow_pow a b = gpow a (base_i ^ b)
+        pow_pow a b = gpow a (q ^ b)
         negpow x    = gpow g (-x)
-        Just m      = pow_pow g (exp-1)
+        m           = pow_pow g (e-1)
 
-        x_n 0 = do
-                b             <- pow_pow h (exp-1)
-                bsgs m b base
+        x_n 0 = do 
+            let b = pow_pow h (e-1)
+            bsgs m b q
         x_n n = do
-                ZmodN prevx _ <- x_n (n-1)
-                rterm         <- negpow (prevx)
-                b             <- pow_pow (h `gcompose` rterm) (exp-1-n)
-                ZmodN xn _    <- bsgs m b base
-                Just $ (ZmodN xn (base_i ^ (n+1))) `rmul` (ZmodN (base_i ^ n) (base_i ^ (n+1))) `radd` (ZmodN prevx (base_i ^ (n+1)))
-                
+            prevx <- x_n (n-1)
+            let rterm = negpow prevx
+                b     = pow_pow (h `gcompose` rterm) (e-1-n)
+            xn <- bsgs m b q
+            return $ prevx + xn * (fromIntegral q) ^ n
     in
-        x_n (exp - 1)
+        x_n (e - 1)
 
 
-pohlig_hellman :: ZmodN -> ZmodN -> [(Integer, Integer)] -> Maybe ZmodN
-pohlig_hellman g h factors = crt $ foldr (\x acc -> subproblem g h x : acc) [] factors
+-- |Calculates the discrete logarithm g^x = h, where 'factors' are
+-- the factors of g's order within its group.
+pohlig_hellman :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> [(Integer, Integer)] -> Maybe Int
+pohlig_hellman g h factors = if isNothing res then Nothing else let (Just (ZnZ (Z i) _)) = res in return (fromIntegral i)
     where
         ord                    = foldr (\x acc -> acc * ((fst x)^(snd x))) 1 factors
-        tmp t (q,e)            = fromJust $ gpow t (ord `div` (q^e))
-        subproblem a b x@(q,e) = fromJust $ logreduce (tmp a x) (tmp b x) (ZmodN q (modulus a)) e
--}
+        tmp t (q,e)            = gpow t (ord `div` (q^e))
+        subproblem a b x@(q,e) = fromJust $ logreduce (tmp a x) (tmp b x) q e
+        res = crt_list (foldr (\x acc -> subproblem g h x : acc) [] factors) (map (\(a, b) -> a^b) factors)

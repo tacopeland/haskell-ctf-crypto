@@ -16,6 +16,8 @@ class FiniteGroup a where
 
 class AbelianGroup a where
 
+class CyclicGroup a where
+
 data ZmodP = ZmodP Integer Integer
     deriving (Show, Eq)
 
@@ -45,14 +47,15 @@ zmodp_pow n x
 
 zmodp_modinv :: ZmodP -> ZmodP
 zmodp_modinv (ZmodP a p) = ZmodP (x `mod` p) p
-    where (_, x, _) = xgcd a p
+    where (_, x, _) = int_xgcd a p
 
 instance FiniteGroup ZmodP where
     -- NAIVE
-    gorder n = toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)
+    gorder n = (toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)) + 1
 
 instance AbelianGroup ZmodP where
 
+instance CyclicGroup ZmodP where
 
 data ZmodN = ZmodN Integer Integer
     deriving (Show, Eq)
@@ -67,6 +70,8 @@ instance Group ZmodN where
     gid (ZmodN _ p) = ZmodN 0 p
 
 instance FiniteGroup ZmodN where
-    gorder n = toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)
+    gorder n = (toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)) + 1
 
 instance AbelianGroup ZmodN where
+
+instance CyclicGroup ZmodN where

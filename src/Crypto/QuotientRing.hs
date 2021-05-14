@@ -4,6 +4,7 @@
 module Crypto.QuotientRing where
 
 import Crypto.Ring
+import Crypto.Domain
 import Crypto.Integers
 
 import Data.List
@@ -17,10 +18,11 @@ class (Ring a, Ring b) => QuotientRing a b | a -> b where
 
 
 -- Z/nZ
-data ZnZ = ZnZ Z Z
+data ZnZ = ZnZ { element :: Z, ideal :: Z }
     deriving (Show, Eq)
 
 instance Ring ZnZ where
+    rzero (ZnZ _ n)  = ZnZ (Z 0) n
     radd (ZnZ (Z a) (Z n)) (ZnZ (Z b) (Z n'))
         | n == n'    = ZnZ (Z ((a + b) `mod` n)) (Z n)
         | otherwise  = error "Trying to add two quotient ring elements with different ideals in radd"
@@ -32,9 +34,10 @@ instance Ring ZnZ where
     rinv                   = znz_modinv
 
 instance QuotientRing ZnZ Z where
-    qrelement (ZnZ x _)  = x
-    qrideal (ZnZ _ i)    = i
-    -- Coercing into a quotient ring is how we take an element modulo an ideal
+    qrelement a          = element a
+    qrideal a            = ideal a
+    -- |Coerce an integer 'a' in 'Z' into 'ZnZ' with ideal 'i in 'Z'.
+    -- This also reduces 'a' modulo the ideal 'i'.
     qrcoerce (Z a) (Z i) = ZnZ (Z (a `mod` i)) (Z i)
 
 
@@ -56,9 +59,9 @@ znz_pow b@(ZnZ (Z a) n) x
             where leftover = binexpand $ a `div` 2
 
 znz_modinv :: ZnZ -> Maybe ZnZ
-znz_modinv (ZnZ (Z a) (Z m))
-    | g /= 1    = Nothing
-    | otherwise = Just (qrcoerce (Z x) (Z m))
+znz_modinv (ZnZ a m)
+    | g /= rid a = Nothing
+    | otherwise  = Just (qrcoerce x m)
     where (g, x, _) = xgcd a m
 
 -- |Finds the multiplicative order of this element in ZnZ

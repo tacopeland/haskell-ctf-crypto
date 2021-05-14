@@ -4,8 +4,11 @@ module CryptoTests where
 import Test.QuickCheck
 import Test.QuickCheck.All
 
+import Data.Maybe
+
 import Crypto.Group
 import Crypto.Ring
+import Crypto
 
 -- https://stackoverflow.com/a/5055626
 -- Add better one later, this is slow
@@ -18,6 +21,31 @@ primes = sieve [2..]
 instance Arbitrary Prime where
     arbitrary = do i <- arbitrary
                    return $ primes!!(abs i)
+
+getcoprime :: Integer -> Gen Integer
+getcoprime n = do a <- chooseInteger (1, (n-1))
+                  if gcd a n == 1 then return a else getcoprime n
+
+-- Generate random valid ZmodN for BSGS
+newtype BSGSZmodN = BSGSZmodN (ZmodN, ZmodN, Integer) deriving Show
+
+instance Arbitrary BSGSZmodN where
+    arbitrary = do (Positive n) <- arbitrary :: Gen (Positive Integer)
+                   n <- return $ n + 1
+                   a <- getcoprime n
+                   b <- choose (1, (n - 1))
+                   return $ BSGSZmodN (ZmodN a n, ZmodN b n, gorder (ZmodN a n))
+                   
+
+-- Generate random valid ZmodP for BSGS
+newtype BSGSZmodP = BSGSZmodP (ZmodP, ZmodP, Integer) deriving Show
+
+instance Arbitrary BSGSZmodP where
+    arbitrary = do (Prime p) <- arbitrary :: Gen Prime
+                   a <- chooseInteger (1, (p - 1))
+                   b <- chooseInteger (1, (p - 1))
+                   return $ BSGSZmodP (ZmodP a p, ZmodP b p, gorder (ZmodP a p))
+                   
 
 -- ZmodP
 prop_ZmodPCommutativeMul :: Integer -> Integer -> Prime -> Bool
@@ -101,7 +129,7 @@ prop_ZInverse x =
     let n = Z x in
         case (rinv n) of
           Nothing -> True
-          Just inv -> inv `rmul` n == (rid :: Z) && n `rmul` inv == (rid :: Z)
+          Just inv -> inv `rmul` n == (rid n) && n `rmul` inv == (rid n)
 
 prop_ZInversePow :: Integer -> Bool
 prop_ZInversePow x =
@@ -111,8 +139,22 @@ prop_ZInversePow x =
 prop_ZIdentity :: Integer -> Bool
 prop_ZIdentity x =
     let n = Z x in
-        (rid :: Z) `rmul` n == n &&
-        n `rmul` (rid :: Z) == n
+        (rid n) `rmul` n == n &&
+        n `rmul` (rid n) == n
+
+prop_bsgsZmodP :: BSGSZmodP -> Bool
+prop_bsgsZmodP (BSGSZmodP (g@(ZmodP _ p), h, order)) =
+    let res = bsgs g h order in
+        if isNothing res
+           then (if order /= p then True else False)
+           else (gpow g (fromJust res)) == h
+
+prop_bsgsZmodN :: BSGSZmodN -> Bool
+prop_bsgsZmodN (BSGSZmodN (g@(ZmodN _ n), h, order)) =
+    let res = bsgs g h order in
+        if isNothing res
+           then (if order /= n then True else False)
+           else (gpow g (fromJust res)) == h
 
 
 
