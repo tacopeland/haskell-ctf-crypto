@@ -3,8 +3,8 @@ A cryptography library in Haskell meant for use in GHCi and short scripts.
 The main purpose of this library is quickly solving CTF problems.
 
 ## To do:
-- [ ] Write show and read instances for my datatypes so I can enter them into Haskell easily. Bonus points for interoperability with sagemath.
-- [ ] Implement polynomial rings.
+- [x] Write show and read instances for my datatypes so I can enter them into Haskell easily. Bonus points for interoperability with sagemath.
+- [x] Implement polynomial rings.
 - [ ] Implement polynomial quotient rings.
 - [ ] Write tests for polynomial rings and quotient rings.
 - [ ] Write alternate show functions for Z that can print the number in hexadecimal and like Python's bytes (printable characters are printed, and hex chars are shown as `\xab`, where ab are the hex digits).
