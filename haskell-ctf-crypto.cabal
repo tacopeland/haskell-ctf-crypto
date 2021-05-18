@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 805a20ee88922d17eec5a421369ae4d051ed8c4ce522e4f0067ed7f3eb6b9852
+-- hash: 9c5df24ecd31d6881dbed078ab4bc555ec758e57a58bfd979eb699fc76ec98c6
 
 name:           haskell-ctf-crypto
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , split
   default-language: Haskell2010
 
 test-suite haskell-ctf-crypto-test

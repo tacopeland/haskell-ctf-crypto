@@ -1,6 +1,6 @@
+-- Misc functions
 module Crypto.Integers where
 
--- Misc functions
 
 int_xgcd :: (Integral a) => a -> a -> (a,a,a)
 int_xgcd a 0

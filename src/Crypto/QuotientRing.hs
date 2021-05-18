@@ -11,15 +11,33 @@ import Data.List
 import Data.Maybe
 
 
+    {-
+        TYPECLASS DEFINITIONS
+    -}
+
 class (Ring a, Ring b) => QuotientRing a b | a -> b where
     qrelement :: a -> b
     qrideal :: a -> b
     qrcoerce :: b -> b -> a
 
 
--- Z/nZ
+    {-
+        DATA TYPES AND INSTANCE DEFINITIONS
+    -}
+
+-- |Quotient ring Z/nZ
 data ZnZ = ZnZ { element :: Z, ideal :: Z }
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show ZnZ where
+    show (ZnZ a n) = show a ++ " mod " ++ show n
+
+instance Read ZnZ where
+    readsPrec _ input =
+        let (a, tail1) = head (lex input)
+            (txt, tail2) = head (lex tail1)
+            (n, tail3) = head (lex tail2)
+         in if txt == "mod" then [(ZnZ (read a) (read n), tail3)] else []
 
 instance Ring ZnZ where
     rzero (ZnZ _ n)  = ZnZ (Z 0) n
@@ -43,9 +61,6 @@ instance QuotientRing ZnZ Z where
     -- This also reduces 'a' modulo the ideal 'i'.
     qrcoerce (Z a) (Z i) = ZnZ (Z (a `mod` i)) (Z i)
 
-
-
-
 znz_pow :: (Integral a) => ZnZ -> a -> Maybe ZnZ
 znz_pow b@(ZnZ a n) x
     | x >= 0              = foldl (\acc x -> rmul <$> acc <*> x) (Just identity)
@@ -62,9 +77,7 @@ znz_pow b@(ZnZ a n) x
               | otherwise = 1 : leftover
               where leftover = binexpand $ a `div` 2
           invmod = znz_modinv b
-          -- Rewrite this to handle Nothing invmods
           Just new_n = invmod
-
 
 znz_modinv :: ZnZ -> Maybe ZnZ
 znz_modinv (ZnZ a m)
@@ -72,7 +85,7 @@ znz_modinv (ZnZ a m)
     | otherwise  = Just (qrcoerce x m)
     where (g, x, _) = xgcd a m
 
--- |Finds the multiplicative order of this element in ZnZ
+-- |Finds the multiplicative order of this element in ZnZ (naive algorithm).
 znz_order :: ZnZ -> Maybe Integer
 znz_order (ZnZ (Z 0) _) = Nothing
 znz_order (ZnZ (Z a) (Z n))

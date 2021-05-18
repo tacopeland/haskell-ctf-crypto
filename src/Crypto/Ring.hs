@@ -3,7 +3,13 @@
 module Crypto.Ring where
 
 import Data.List
+import Data.List.Split
 import Data.Maybe
+
+
+    {-
+        TYPECLASS DEFINITIONS
+    -}
 
 class Ring a where
     rzero :: a -> a
@@ -17,9 +23,22 @@ class (Ring a) => IdentityRing a where
 
 class (Ring a) => CommutativeRing a where
 
--- Integer ring
+
+    {-
+        DATA TYPES AND INSTANCE DEFINITIONS
+    -}
+
+-- |Integer ring Z
 data Z = Z Integer
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show Z where
+    show (Z a) = show a
+
+instance Read Z where
+    readsPrec _ input =
+        let (a, t) = head (lex input)
+         in [(Z (read a), t)]
 
 instance Ring Z where
     rzero _ = (Z 0)
@@ -39,12 +58,35 @@ instance IdentityRing Z where
 instance CommutativeRing Z where
 
 
--- Polynomial ring with ring elements
-data Rx a = Rx [a] deriving (Show, Eq)
+-- |Polynomial ring R[x] with ring elements x.
+data Rx a = Rx [a] deriving (Read, Show, Eq)
 
+readZx :: String -> Rx Z
+readZx input =
+    let readterm input =
+            let (a, t1) = head (lex input)
+                (mul, t2) = head (lex t1)
+                (sym, t3) = head (lex t2)
+                (caret, t4) = head (lex t3)
+                (exp, t5) = head (lex t4)
+             in case () of _
+                             | sym == "" -> (Z (read a), 0)
+                             | exp == "" -> (Z (read a), 1)
+                             | otherwise ->  (Z (read a), read exp :: Integer)
+        terms = splitOn "+" input
+        sorted = sortOn snd $ map readterm terms
+        converted _ [] = []
+        converted i t@((a, e) : xs)
+          | i == e    = a : converted (i + 1) xs
+          | otherwise = (Z 0) : converted (i + 1) t
+     in Rx (converted 0 sorted)
+
+-- |Multiply polynomial by a scalar
 scalarmul :: (Ring a) => a -> Rx a -> Rx a
 scalarmul a (Rx b) = Rx (map (rmul a) b)
 
+-- |Match the length of the two ring element arrays, with the shorter
+-- one being padded to the right with the zero element
 matchlength :: (Ring a) => [a] -> [a] -> ([a], [a])
 matchlength [] [] = ([],[])
 matchlength a@[] b@(x:_) = 
@@ -61,7 +103,6 @@ matchlength a@(x:_) b =
 instance IdentityRing a => IdentityRing (Rx a) where
     rid (Rx a) = Rx ([rid (head a)])
 
-
 instance IdentityRing a => Ring (Rx a) where
     rzero (Rx r@(x:xs)) = Rx (take (length r) $ repeat (rzero x))
     radd (Rx a') (Rx b') =
@@ -70,8 +111,7 @@ instance IdentityRing a => Ring (Rx a) where
     rmul (Rx a) (Rx b) =
         let a' = zip a [0..]
          in foldl (\acc (x, i) -> radd acc (scalarmul x (Rx ((take i $ repeat (rzero x)) ++ b)))) (Rx []) a'
-    rneg (Rx a) =
-        Rx (map (\x -> rneg x) a)
+    rneg (Rx a) = Rx (map (\x -> rneg x) a)
     rpow b e
       | e >= 0 = Just $ rxpow b e
       | otherwise = 
@@ -83,10 +123,8 @@ instance IdentityRing a => Ring (Rx a) where
                    return $ Rx [inv]
            else Nothing
 
-
 rxpow :: (IdentityRing a, Integral b) => Rx a -> b -> Rx a
-rxpow b 0 = 
-    rid b
+rxpow b 0 = rid b
 rxpow b e =
     let square x = rmul x x
      in if even e
