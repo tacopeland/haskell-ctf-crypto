@@ -44,22 +44,27 @@ instance QuotientRing ZnZ Z where
     qrcoerce (Z a) (Z i) = ZnZ (Z (a `mod` i)) (Z i)
 
 
+
+
 znz_pow :: (Integral a) => ZnZ -> a -> Maybe ZnZ
-znz_pow b@(ZnZ (Z a) n) x
-    | x >= 0              = foldr (\x y -> rmul <$> x <*> y) (Just identity)
-                            (zipWith rpow (modsquares b) (binexpand x))
+znz_pow b@(ZnZ a n) x
+    | x >= 0              = foldl (\acc x -> rmul <$> acc <*> x) (Just identity)
+                            (zipWith (\(ZnZ (Z b) _) e -> Just (qrcoerce (Z (b^e)) n :: ZnZ))
+                                (modsquares b)
+                                (binexpand x))
     | invmod == Nothing   = Nothing
     | otherwise           = znz_pow new_n (-x)
     where identity = ZnZ (Z 1) n
-          invmod = znz_modinv b
-          -- Rewrite this to handle Nothing invmods
-          Just new_n = invmod
           modsquares = iterate (\x -> x `rmul` x)
           binexpand 0 = []
           binexpand a 
-            | even a    = 1 : leftover
-            | otherwise = 0 : leftover
-            where leftover = binexpand $ a `div` 2
+              | even a    = 0 : leftover
+              | otherwise = 1 : leftover
+              where leftover = binexpand $ a `div` 2
+          invmod = znz_modinv b
+          -- Rewrite this to handle Nothing invmods
+          Just new_n = invmod
+
 
 znz_modinv :: ZnZ -> Maybe ZnZ
 znz_modinv (ZnZ a m)

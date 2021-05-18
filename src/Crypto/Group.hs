@@ -41,8 +41,8 @@ zmodp_pow n x
           modsquares n = iterate (\x -> x `gcompose` x) n
           binexpand 0 = []
           binexpand a 
-            | a `mod` 2 == 1 = 1 : leftover
-            | otherwise      = 0 : leftover
+            | even a       = 0 : leftover
+            | otherwise    = 1 : leftover
             where leftover = binexpand $ a `div` 2
 
 zmodp_modinv :: ZmodP -> ZmodP
