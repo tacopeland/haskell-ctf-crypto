@@ -118,7 +118,7 @@ instance IdentityRing a => IdentityRing (Rx a) where
     rid (Rx a) = Rx ([rid (head a)])
 
 instance IdentityRing a => Ring (Rx a) where
-    rzero (Rx r@(x:xs)) = Rx (take (length r) $ repeat (rzero x))
+    rzero (Rx xs) = Rx []
     radd (Rx a') (Rx b') =
         let (a, b) = matchlength a' b'
         in Rx (zipWith radd a b)

@@ -4,6 +4,7 @@ module Crypto where
 import Crypto.Group
 import Crypto.Ring
 import Crypto.QuotientRing
+import Crypto.Field
 
 import Data.List
 import Data.Maybe

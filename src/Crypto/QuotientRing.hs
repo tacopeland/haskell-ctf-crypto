@@ -4,7 +4,6 @@
 module Crypto.QuotientRing where
 
 import Crypto.Ring
-import Crypto.Domain
 import Crypto.Integers
 
 import Data.List
@@ -80,10 +79,10 @@ znz_pow b@(ZnZ a n) x
           Just new_n = invmod
 
 znz_modinv :: ZnZ -> Maybe ZnZ
-znz_modinv (ZnZ a m)
-    | g /= rid a = Nothing
-    | otherwise  = Just (qrcoerce x m)
-    where (g, x, _) = xgcd a m
+znz_modinv (ZnZ (Z a) (Z m))
+    | g /= 1    = Nothing
+    | otherwise = Just (qrcoerce (Z x) (Z m))
+    where (g, x, _) = int_xgcd a m
 
 -- |Finds the multiplicative order of this element in ZnZ (naive algorithm).
 znz_order :: ZnZ -> Maybe Integer
@@ -108,4 +107,27 @@ instance (Read a) => Read (Rxm a) where
             ((n, tail3):zs) = readsPrec (i+1) tail2
          in if txt == "mod" then [(Rxm a n, tail3)] else []
 
+    {-
 
+instance QuotientRing Rxm Z where
+    qrelement a  = rxm_element a
+    qrideal a    = rxm_ideal a
+    qrcoerce a n = Rxm (
+
+instance Ring (Rxm a) where
+    rzero (Rxm a n)  = Rxm (rzero a) n
+    radd (Rxm a n) (Rxm b n')
+        | n == n'    = qrcoerce (radd a b) 
+        | otherwise  = error "Trying to add two quotient ring elements with different ideals in radd"
+    rmul (ZnZ (Z a) (Z n)) (ZnZ (Z b) (Z n'))
+        | n == n'    = ZnZ (Z ((a * b) `mod` n)) (Z n)
+        | otherwise  = error "Trying to multiply two quotient ring elements with different ideals in rmul"
+    rneg (ZnZ (Z a) (Z b)) = ZnZ (Z ((-a) `mod` b)) (Z b)
+    rpow                   = znz_pow
+    rinv                   = znz_modinv
+
+instance IdentityRing (Rx a) where
+    rid (ZnZ _ n) = ZnZ (Z 1) n
+
+
+-}
