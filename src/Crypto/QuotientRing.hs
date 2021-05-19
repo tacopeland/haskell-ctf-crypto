@@ -26,7 +26,7 @@ class (Ring a, Ring b) => QuotientRing a b | a -> b where
     -}
 
 -- |Quotient ring Z/nZ
-data ZnZ = ZnZ { element :: Z, ideal :: Z }
+data ZnZ = ZnZ { znz_element :: Z, znz_ideal :: Z }
     deriving (Eq)
 
 instance Show ZnZ where
@@ -55,8 +55,8 @@ instance IdentityRing ZnZ where
     rid (ZnZ _ n) = ZnZ (Z 1) n
 
 instance QuotientRing ZnZ Z where
-    qrelement a          = element a
-    qrideal a            = ideal a
+    qrelement a          = znz_element a
+    qrideal a            = znz_ideal a
     -- |Coerce an integer 'a' in 'Z' into 'ZnZ' with ideal 'i in 'Z'.
     -- This also reduces 'a' modulo the ideal 'i'.
     qrcoerce (Z a) (Z i) = ZnZ (Z (a `mod` i)) (Z i)
@@ -92,3 +92,20 @@ znz_order (ZnZ (Z a) (Z n))
     | gcd a n /= 1 = Nothing
     | otherwise = Just (toInteger (index + 1))
     where Just index = elemIndex (Z 1) (iterate (rmul (Z n)) (Z n))
+
+
+-- |Quotient ring Rx/(m)
+data Rxm a = Rxm { rxm_element :: Rx a, rxm_ideal :: Rx a}
+    deriving (Eq)
+
+instance (Show a) => Show (Rxm a) where
+    show (Rxm a m) = show a ++ " mod " ++ show m
+
+instance (Read a) => Read (Rxm a) where
+    readsPrec i input =
+        let ((a, tail1):xs) = readsPrec (i+1) input
+            ((txt, tail2):ys) = readsPrec (i+1) tail1
+            ((n, tail3):zs) = readsPrec (i+1) tail2
+         in if txt == "mod" then [(Rxm a n, tail3)] else []
+
+

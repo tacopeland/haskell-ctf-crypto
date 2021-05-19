@@ -63,17 +63,31 @@ data Rx a = Rx [a] deriving (Read, Show, Eq)
 
 readZx :: String -> Rx Z
 readZx input =
-    let readterm input =
-            let (a, t1) = head (lex input)
-                (mul, t2) = head (lex t1)
-                (sym, t3) = head (lex t2)
-                (caret, t4) = head (lex t3)
-                (exp, t5) = head (lex t4)
+    let readterm (sign, input) =
+            let f = if sign == "-" then rneg else id
+                (c1, t1) = head (lex input)
+                (c2, t2) = head (lex t1)
+                (c3, t3) = head (lex t2)
+                (c4, t4) = head (lex t3)
+                (c5, t5) = head (lex t4)
              in case () of _
-                             | sym == "" -> (Z (read a), 0)
-                             | exp == "" -> (Z (read a), 1)
-                             | otherwise ->  (Z (read a), read exp :: Integer)
-        terms = splitOn "+" input
+                             -- a*x^e
+                             | c2 == "*" && c4 == "^" -> (f $ Z (read c1), read c5 :: Integer)
+                             -- ax^e
+                             | c3 == "^"              -> (f $ Z (read c1), read c4 :: Integer)
+                             -- x^e
+                             | c2 == "^"              -> (f $ Z 1, read c3 :: Integer)
+                             -- ax
+                             | c2 == "x"              -> (f $ Z (read c1), 1)
+                             -- x
+                             | c1 == "x" && c2 == ""  -> (f $ Z 1, 1)
+                             -- a
+                             | otherwise              -> (f $ Z (read c1), 0)
+        collected [] = []
+        collected (x:y:xs) = (x, y) : collected xs
+        isLeadingTermNegative = if fst (head (lex input)) == "-" then True else False
+        splitinput = if isLeadingTermNegative then (tail (split (oneOf "+-") input)) else ("+" : (split (oneOf "+-") input))
+        terms = collected splitinput
         sorted = sortOn snd $ map readterm terms
         converted _ [] = []
         converted i t@((a, e) : xs)
