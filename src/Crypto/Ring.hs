@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Crypto.Ring where
 
+import Data.Char
 import Data.List
 import Data.List.Split
 import Data.Maybe
@@ -11,7 +12,7 @@ import Data.Maybe
         TYPECLASS DEFINITIONS
     -}
 
-class Ring a where
+class (Eq a) => Ring a where
     rzero :: a -> a
     radd, rmul :: a -> a -> a
     rneg :: a -> a
@@ -29,7 +30,7 @@ class (Ring a) => CommutativeRing a where
     -}
 
 -- |Integer ring Z
-data Z = Z Integer
+newtype Z = Z Integer
     deriving (Eq)
 
 instance Show Z where
@@ -41,25 +42,25 @@ instance Read Z where
          in [(Z (read a), t)]
 
 instance Ring Z where
-    rzero _ = (Z 0)
+    rzero _ = Z 0
     radd (Z a) (Z b) = Z (a + b)
     rmul (Z a) (Z b) = Z (a * b)
-    rneg (Z a) = (Z (-a))
+    rneg (Z a) = Z (-a)
     rpow (Z a) b
-      | a == -1 = Just $ Z (if (even b) then 1 else (-1))
+      | a == -1 = Just $ Z (if even b then 1 else (-1))
       | a == 1 && b == -1 = Just $ Z 1
-      | (b >= 0) = Just (Z (a ^ b))
+      | b >= 0 = Just (Z (a ^ b))
       | otherwise = Nothing
     rinv (Z a)       = if (a == -1) || (a == 1) then Just (Z a) else Nothing
 
 instance IdentityRing Z where
-    rid _            = (Z 1)
+    rid _            = Z 1
 
 instance CommutativeRing Z where
 
 
 -- |Polynomial ring R[x] with ring elements x.
-data Rx a = Rx [a] deriving (Read, Show, Eq)
+newtype Rx a = Rx [a] deriving (Read, Show, Eq)
 
 readZx :: String -> Rx Z
 readZx input =
@@ -72,27 +73,37 @@ readZx input =
                 (c5, t5) = head (lex t4)
              in case () of _
                              -- a*x^e
-                             | c2 == "*" && c4 == "^" -> (f $ Z (read c1), read c5 :: Integer)
+                             | c2 == "*" && c4 == "^"
+                                -> (f $ Z (read c1), read c5 :: Integer)
                              -- ax^e
-                             | c3 == "^"              -> (f $ Z (read c1), read c4 :: Integer)
+                             | c3 == "^"
+                                -> (f $ Z (read c1), read c4 :: Integer)
                              -- x^e
-                             | c2 == "^"              -> (f $ Z 1, read c3 :: Integer)
+                             | c2 == "^"
+                                -> (f $ Z 1, read c3 :: Integer)
+                             -- a*x
+                             | c2 == "*" && all isAlpha c3
+                                -> (f $ Z (read c1), 1)
                              -- ax
-                             | c2 == "x"              -> (f $ Z (read c1), 1)
+                             | all isAlpha c2 && not (null c2)
+                                -> (f $ Z (read c1), 1)
                              -- x
-                             | c1 == "x" && c2 == ""  -> (f $ Z 1, 1)
+                             | all isAlpha c1 && c2 == ""
+                                -> (f $ Z 1, 1)
                              -- a
-                             | otherwise              -> (f $ Z (read c1), 0)
-        collected [] = []
+                             | otherwise
+                                -> (f $ Z (read c1), 0)
+        collected []       = []
+        collected [_]      = error "Splitinput not working correctly: odd number of elements given to collected"
         collected (x:y:xs) = (x, y) : collected xs
-        isLeadingTermNegative = if fst (head (lex input)) == "-" then True else False
-        splitinput = if isLeadingTermNegative then (tail (split (oneOf "+-") input)) else ("+" : (split (oneOf "+-") input))
+        isLeadingTermNegative = fst (head (lex input)) == "-"
+        splitinput = if isLeadingTermNegative then tail (split (oneOf "+-") input) else "+" : split (oneOf "+-") input
         terms = collected splitinput
         sorted = sortOn snd $ map readterm terms
         converted _ [] = []
         converted i t@((a, e) : xs)
           | i == e    = a : converted (i + 1) xs
-          | otherwise = (Z 0) : converted (i + 1) t
+          | otherwise = Z 0 : converted (i + 1) t
      in Rx (converted 0 sorted)
 
 -- |Multiply polynomial by a scalar
@@ -106,16 +117,16 @@ matchlength [] [] = ([],[])
 matchlength a@[] b@(x:_) = 
     let lena = length a
         lenb = length b
-        maxlen = max (lena) (lenb)
-     in (a ++ (take (maxlen - lena) (repeat (rzero x))), b ++ (take (maxlen - lenb) (repeat (rzero x))))
+        maxlen = max lena lenb
+     in (a ++ replicate (maxlen - lena) (rzero x), b ++ replicate (maxlen - lenb) (rzero x))
 matchlength a@(x:_) b =
     let lena = length a
         lenb = length b
-        maxlen = max (lena) (lenb)
-     in (a ++ (take (maxlen - lena) (repeat (rzero x))), b ++ (take (maxlen - lenb) (repeat (rzero x))))
+        maxlen = max lena lenb
+     in (a ++ replicate (maxlen - lena) (rzero x), b ++ replicate (maxlen - lenb) (rzero x))
 
 instance IdentityRing a => IdentityRing (Rx a) where
-    rid (Rx a) = Rx ([rid (head a)])
+    rid (Rx a) = Rx [rid (head a)]
 
 instance IdentityRing a => Ring (Rx a) where
     rzero (Rx xs) = Rx []
@@ -124,21 +135,23 @@ instance IdentityRing a => Ring (Rx a) where
         in Rx (zipWith radd a b)
     rmul (Rx a) (Rx b) =
         let a' = zip a [0..]
-         in foldl (\acc (x, i) -> radd acc (scalarmul x (Rx ((take i $ repeat (rzero x)) ++ b)))) (Rx []) a'
-    rneg (Rx a) = Rx (map (\x -> rneg x) a)
+         in foldl' (\acc (x, i) -> radd acc (scalarmul x (Rx (replicate i (rzero x) ++ b)))) (Rx []) a'
+    rneg (Rx a) = Rx (map rneg a)
     rpow b e
       | e >= 0 = Just $ rxpow b e
       | otherwise = 
           let inv = rinv b
            in if isNothing inv then Nothing else Just $ rxpow (fromJust inv) (-e)
     rinv (Rx (x:xs)) =
-        if length xs == 0
-           then do inv <- (rinv x)
-                   return $ Rx [inv]
+        if null xs
+           then do inv <- rinv x
+                   return (Rx [inv])
            else Nothing
+    rinv _ = Nothing
 
 rxpow :: (IdentityRing a, Integral b) => Rx a -> b -> Rx a
 rxpow b 0 = rid b
+rxpow b 1 = b
 rxpow b e =
     let square x = rmul x x
      in if even e

@@ -1,7 +1,6 @@
 module Crypto.Field where
 
 import Crypto.Ring
-import Crypto.QuotientRing
 
 import Data.Maybe
 
@@ -10,7 +9,7 @@ import Data.Maybe
         TYPECLASS DEFINITIONS
     -}
 
-class (Ring a) => Field a where
+class (IdentityRing a) => Field a where
     finv :: a -> a
     finv = fromJust . rinv
 
@@ -18,8 +17,6 @@ class (Ring a) => Field a where
     {-
         DATA TYPES AND INSTANCE DEFINITIONS
     -}
-
-instance Field ZnZ where
 
 
     {-

@@ -40,24 +40,24 @@ instance Read ZmodP where
         let (a, tail1) = head (lex input)
             (txt, tail2) = head (lex tail1)
             (n, tail3) = head (lex tail2)
-         in if txt == "mod" then [(ZmodP (read a) (read n), tail3)] else []
+         in [(ZmodP (read a) (read n), tail3) | txt == "mod"]
 
 instance Group ZmodP where
     gcompose (ZmodP a p) (ZmodP b p')
         | p == p'   = ZmodP ((a * b) `mod` p) p
         | otherwise = error "Conflicting moduli in gcompose"
-    gpow = zmodp_pow
-    ginv = zmodp_modinv
+    gpow = zmodpPow
+    ginv = zmodpModinv
     gid (ZmodP _ p) = ZmodP 1 p
 
-zmodp_pow :: (Integral a) => ZmodP -> a -> ZmodP
-zmodp_pow n x
+zmodpPow :: (Integral a) => ZmodP -> a -> ZmodP
+zmodpPow n x
     | x >= 0              = foldr gcompose (gid n)
                             (zipWith (\(ZmodP a p) e -> ZmodP ((a^e) `mod` p) p)
                                 (modsquares n)
                                 (binexpand x))
     | otherwise           = gpow new_n (-x)
-    where new_n = zmodp_modinv n
+    where new_n = zmodpModinv n
           modsquares n = iterate (\x -> x `gcompose` x) n
           binexpand 0 = []
           binexpand a 
@@ -65,13 +65,13 @@ zmodp_pow n x
             | otherwise    = 1 : leftover
             where leftover = binexpand $ a `div` 2
 
-zmodp_modinv :: ZmodP -> ZmodP
-zmodp_modinv (ZmodP a p) = ZmodP (x `mod` p) p
-    where (_, x, _) = int_xgcd a p
+zmodpModinv :: ZmodP -> ZmodP
+zmodpModinv (ZmodP a p) = ZmodP (x `mod` p) p
+    where (_, x, _) = intXgcd a p
 
 instance FiniteGroup ZmodP where
     -- NAIVE
-    gorder n = (toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)) + 1
+    gorder n = toInteger (fromJust (elemIndex (gid n) (iterate (gcompose n) n))) + 1
 
 instance AbelianGroup ZmodP where
 
@@ -91,18 +91,18 @@ instance Read ZmodN where
         let (a, tail1) = head (lex input)
             (txt, tail2) = head (lex tail1)
             (n, tail3) = head (lex tail2)
-         in if txt == "mod" then [(ZmodN (read a) (read n), tail3)] else []
+         in [(ZmodN (read a) (read n), tail3) | txt == "mod"]
 
 instance Group ZmodN where
     gcompose (ZmodN a n) (ZmodN b n')
         | n == n'   = ZmodN ((a + b) `mod` n) n
         | otherwise = error "Conflicting moduli in gcompose"
-    gpow (ZmodN a n) e = (ZmodN ((a * (fromIntegral e)) `mod` n) n)
-    ginv (ZmodN a n) = (ZmodN ((-a) `mod` n) n)
+    gpow (ZmodN a n) e = ZmodN ((a * fromIntegral e) `mod` n) n
+    ginv (ZmodN a n) = ZmodN ((-a) `mod` n) n
     gid (ZmodN _ p) = ZmodN 0 p
 
 instance FiniteGroup ZmodN where
-    gorder n = (toInteger $ fromJust $ elemIndex (gid n) (iterate (gcompose n) n)) + 1
+    gorder n = toInteger (fromJust (elemIndex (gid n) (iterate (gcompose n) n))) + 1
 
 instance AbelianGroup ZmodN where
 
