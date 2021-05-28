@@ -26,6 +26,8 @@ library:
   source-dirs: src
   dependencies:
     - split
+    - integer-roots
+    - random
 
 tests:
   haskell-ctf-crypto-test:
