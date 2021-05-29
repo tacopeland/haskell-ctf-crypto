@@ -5,8 +5,8 @@ The main purpose of this library is quickly solving CTF problems.
 ## To do:
 - [x] Write show and read instances for my datatypes so I can enter them into Haskell easily. Bonus points for interoperability with sagemath.
 - [x] Implement polynomial rings.
+- [ ] Implement primality tests (Miller-Rabin).
 - [ ] ~~Implement Number Theoretic Transform.~~
-- [ ] ~~Implement primality tests (Miller-Rabin).~~
 - [ ] ~~Implement polynomial quotient rings.~~
 - [ ] ~~Write tests for polynomial rings and quotient rings.~~
 - [ ] ~~Write alternate show functions for Z that can print the number in hexadecimal and like Python's bytes (printable characters are printed, and hex chars are shown as `\xab`, where ab are the hex digits).~~

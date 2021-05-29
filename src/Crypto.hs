@@ -1,11 +1,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Crypto where
 
-import Crypto.Group
-import Crypto.Ring
-import Crypto.QuotientRing
-import Crypto.Domain
-import Crypto.Field
+import Crypto.Algebra.Group.Class
+import Crypto.Algebra.Ring.Class
+import Crypto.Algebra.Ring.QuotientRing
+import Crypto.Algebra.Domain.Class
+import Crypto.Algebra.Field.Class
 
 import Data.List
 import Data.Maybe
@@ -13,6 +13,7 @@ import Data.Maybe
 import Debug.Trace
 
 
+    {-
 -- |Shanks' Baby-Step Giant-Step discrete logarithm algorithm.
 bsgs :: (Integral b, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> b -> Maybe Int
 bsgs g h ord
@@ -86,3 +87,4 @@ pohligHellman g h factors = if isNothing res then Nothing else let (Just (ZnZ (Z
         tmp t (q,e)            = gpow t (ord `div` (q^e))
         subproblem a b x@(q,e) = fromJust $ logReduce (tmp a x) (tmp b x) q e
         res = crtList (map (subproblem g h) factors) (map (uncurry (^)) factors)
+        -}

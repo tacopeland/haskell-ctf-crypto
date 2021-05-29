@@ -2,13 +2,13 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Crypto.QuotientRing where
+module Crypto.Algebra.Ring.QuotientRing where
 
 import Crypto.Integers
-import Crypto.Group
-import Crypto.Ring
-import Crypto.Field
-import Crypto.Domain
+import Crypto.Algebra.Group.Class
+import Crypto.Algebra.Ring.Class
+import Crypto.Algebra.Field.Class
+import Crypto.Algebra.Domain.Class
 
 import Data.List
 import Data.Maybe
@@ -23,88 +23,7 @@ class (Ring a, Ring b) => QuotientRing a b | a -> b where
     qrideal :: a -> b
     qrcoerce :: b -> b -> a
 
-
-    {-
-        DATA TYPES AND INSTANCE DEFINITIONS
-    -}
-
--- |Quotient ring Z/nZ
-data ZnZ = ZnZ { znzElement :: Z, znzIdeal :: Z }
-    deriving (Eq)
-
-instance Show ZnZ where
-    show (ZnZ a n) = show a ++ " mod " ++ show n
-
-instance Read ZnZ where
-    readsPrec _ input =
-        let (a, tail1) = head (lex input)
-            (txt, tail2) = head (lex tail1)
-            (n, tail3) = head (lex tail2)
-         in [(ZnZ (read a) (read n), tail3) | txt == "mod"]
-
-instance Ring ZnZ where
-    rzero (ZnZ _ n)  = ZnZ (Z 0) n
-    radd (ZnZ (Z a) (Z n)) (ZnZ (Z b) (Z n'))
-        | n == n'    = ZnZ (Z ((a + b) `mod` n)) (Z n)
-        | otherwise  = error "Trying to add two quotient ring elements with different ideals in radd"
-    rmul (ZnZ (Z a) (Z n)) (ZnZ (Z b) (Z n'))
-        | n == n'    = ZnZ (Z ((a * b) `mod` n)) (Z n)
-        | otherwise  = error "Trying to multiply two quotient ring elements with different ideals in rmul"
-    rneg (ZnZ (Z a) (Z b)) = ZnZ (Z ((-a) `mod` b)) (Z b)
-    rpow                   = znzPow
-    rinv                   = znzModinv
-
-instance IdentityRing ZnZ where
-    rid (ZnZ _ n) = ZnZ (Z 1) n
-
-instance QuotientRing ZnZ Z where
-    qrelement a          = znzElement a
-    qrideal a            = znzIdeal a
-    -- |Coerce an integer 'a' in 'Z' into 'ZnZ' with ideal 'i in 'Z'.
-    -- This also reduces 'a' modulo the ideal 'i'.
-    qrcoerce (Z a) (Z i) = ZnZ (Z (a `mod` i)) (Z i)
-
-instance EuclideanDomain ZnZ where
-    divide a b = 
-        let inverse = rinv b
-         in if isNothing inverse
-               then error "Dividing a non-unit!"
-               else (rmul a (fromJust inverse), rzero a)
-
-instance Field ZnZ where
-
-znzPow :: (Integral a) => ZnZ -> a -> Maybe ZnZ
-znzPow b@(ZnZ a n) x
-    | x >= 0            = foldl (\acc x -> rmul <$> acc <*> x) (Just identity)
-                          (zipWith (\(ZnZ (Z b) _) e -> Just (qrcoerce (Z (b^e)) n :: ZnZ))
-                              (modsquares b)
-                              (binexpand x))
-    | invmod == Nothing = Nothing
-    | otherwise         = znzPow new_n (-x)
-    where identity = ZnZ (Z 1) n
-          invmod = znzModinv b
-          modsquares = iterate (\x -> x `rmul` x)
-          Just new_n = invmod
-
-znzModinv :: ZnZ -> Maybe ZnZ
-znzModinv (ZnZ (Z a) (Z m))
-    | g /= 1    = Nothing
-    | otherwise = Just (qrcoerce (Z x) (Z m))
-    where (g, x, _) = intXgcd a m
-
--- |Finds the multiplicative order of this element in ZnZ (naive algorithm).
-znzOrder :: ZnZ -> Maybe Integer
-znzOrder (ZnZ (Z 0) _) = Nothing
-znzOrder (ZnZ (Z a) (Z n))
-    | gcd a n /= 1 = Nothing
-    | otherwise = Just (toInteger (index + 1))
-    where Just index = elemIndex (Z 1) (iterate (rmul (Z n)) (Z n))
-
-readZnZx :: String -> Z -> Rx ZnZ
-readZnZx input n =
-    let Rx a = readZx input
-     in Rx $ map (`qrcoerce` n) a
-
+        {-
 
 -- |Quotient ring Rx/(m)
 data Rxm a = Rxm { rxm_element :: Rx a, rxm_ideal :: Rx a}
@@ -136,7 +55,6 @@ instance (EuclideanDomain a) => Ring (Rxm a) where
         | n == n'    = qrcoerce (rmul a b) n
         | otherwise  = error "Trying to multiply two quotient ring elements with different ideals in rmul"
     rneg (Rxm a n)   = qrcoerce (rneg a) n
-        {-
     rpow             = rxmpow
     rinv                   = znzModinv
 
@@ -172,6 +90,7 @@ rx_modpow b e n =
            else modulo (rmul b (rx_modpow b (e - 1) n)) n
            -}
 
+    {-
 -- |Horner's rule
 evaluatePoly (Rx a) x =
     foldl' (\acc c -> radd (rmul acc x) c) (rzero (head a)) (reverse a)
@@ -181,7 +100,7 @@ instance (EuclideanDomain a) => IdentityRing (Rxm a) where
 
 
 -- |The elliptic curve group over GF(p)
-data EC = EC_O | EC { ec_x :: ZnZ, ec_y :: ZnZ, ec_A :: ZnZ, ec_B :: ZnZ }
+data EC = EC_O | EC { ec_x :: ZZP, ec_y :: ZZP, ec_A :: ZZP, ec_B :: ZZP }
     deriving (Show, Eq)
 
 instance Group EC where
@@ -216,7 +135,13 @@ ecpow p e
         invmod = ginv p
         modsquares = iterate (\x -> gcompose x x) p
 
+instance CyclicGroup EC where
+
+instance FiniteGroup EC where
+    gorder (EC (ZnZ _ (Z n)) _ _ _) = n
+    gorder EC_O = 0
         
+instance AbelianGroup EC where
 
     {-
         MISCELLANEOUS FUNCTIONS
@@ -281,4 +206,4 @@ rxmodmul (Rx a) (Rx b) n =
 
 
 
-
+-}

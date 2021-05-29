@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Crypto.Ring where
+module Crypto.Algebra.Ring.Class where
 
 import Data.Char
 import Data.List
@@ -29,35 +29,7 @@ class (Ring a) => CommutativeRing a where
         DATA TYPES AND INSTANCE DEFINITIONS
     -}
 
--- |Integer ring Z
-newtype Z = Z Integer
-    deriving (Eq)
-
-instance Show Z where
-    show (Z a) = show a
-
-instance Read Z where
-    readsPrec _ input =
-        let (a, t) = head (lex input)
-         in [(Z (read a), t)]
-
-instance Ring Z where
-    rzero _ = Z 0
-    radd (Z a) (Z b) = Z (a + b)
-    rmul (Z a) (Z b) = Z (a * b)
-    rneg (Z a) = Z (-a)
-    rpow (Z a) b
-      | a == -1 = Just $ Z (if even b then 1 else (-1))
-      | a == 1 && b == -1 = Just $ Z 1
-      | b >= 0 = Just (Z (a ^ b))
-      | otherwise = Nothing
-    rinv (Z a)       = if (a == -1) || (a == 1) then Just (Z a) else Nothing
-
-instance IdentityRing Z where
-    rid _            = Z 1
-
-instance CommutativeRing Z where
-
+    {-
 
 -- |Polynomial ring R[x] with ring elements x.
 newtype Rx a = Rx [a] deriving (Read, Show, Eq)
@@ -157,3 +129,4 @@ rxpow b e =
      in if even e
            then square (rxpow b (e `div` 2))
            else rmul b (rxpow b (e - 1))
+           -}
