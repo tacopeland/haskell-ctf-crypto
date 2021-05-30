@@ -46,32 +46,32 @@ prop_ZZCommutativeAdd :: Integer -> Integer -> Bool
 prop_ZZCommutativeAdd x y =
     ZZ x + ZZ y == ZZ y + ZZ x
 
-prop_ZAssociativeAdd :: Integer -> Integer -> Integer -> Bool
-prop_ZAssociativeAdd x y z =
+prop_ZZAssociativeAdd :: Integer -> Integer -> Integer -> Bool
+prop_ZZAssociativeAdd x y z =
     (ZZ x + ZZ y) + ZZ z == ZZ x + (ZZ y + ZZ z)
 
-prop_ZCommutativeMul :: Integer -> Integer -> Bool
-prop_ZCommutativeMul x y =
+prop_ZZCommutativeMul :: Integer -> Integer -> Bool
+prop_ZZCommutativeMul x y =
     ZZ x * ZZ y == ZZ y * ZZ x
 
-prop_ZAssociativeMul :: Integer -> Integer -> Integer -> Bool
-prop_ZAssociativeMul x y z =
+prop_ZZAssociativeMul :: Integer -> Integer -> Integer -> Bool
+prop_ZZAssociativeMul x y z =
     (ZZ x * ZZ y) * ZZ z == ZZ x * (ZZ y * ZZ z)
 
-prop_ZInverse :: Integer -> Bool
-prop_ZInverse x =
+prop_ZZInverse :: Integer -> Bool
+prop_ZZInverse x =
     let n = ZZ x in
         case rinv n of
           Nothing -> True
           Just inv -> inv * n == rid n && n * inv == rid n
 
-prop_ZInversePow :: Integer -> Bool
-prop_ZInversePow x =
+prop_ZZInversePow :: Integer -> Bool
+prop_ZZInversePow x =
     let n = ZZ x in
         rinv n == rpow n (-1)
 
-prop_ZIdentity :: Integer -> Bool
-prop_ZIdentity x =
+prop_ZZIdentity :: Integer -> Bool
+prop_ZZIdentity x =
     let n = ZZ x in
         rid n * n == n &&
         n * rid n == n

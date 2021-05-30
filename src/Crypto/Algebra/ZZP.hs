@@ -26,7 +26,7 @@ instance Group ZZP where
         | otherwise = error "Conflicting moduli in gcompose"
     gpow = zzpPow
     ginv = zzpModInv
-    gid (ZZP _ p) = ZZP 1 p
+    gid (ZZP _ p) = ZZP (ZZ 1) p
 
 zzpPow :: (Integral a) => ZZP -> a -> ZZP
 zzpPow n x
@@ -42,7 +42,10 @@ zzpModInv (ZZP a p) = ZZP (x `mod` p) p
     where (_, x, _) = Int.xgcd a p
 
 instance FiniteGroup ZZP where
-    gorder n = toInteger (modulus n) - 1
+    gorder (ZZP (ZZ 0) _) = error "Invalid ZZP: there is no zero element in ZZP."
+    gorder n
+      | n == gid n        = 1
+      | otherwise         = toInteger (modulus n) - 1
 
 instance AbelianGroup ZZP where
 
@@ -91,3 +94,4 @@ instance Num ZZP where
     signum a
       | a == rzero a = a
       | otherwise    = rid a
+    fromInteger a = error "fromInteger not implemented for ZZP"
