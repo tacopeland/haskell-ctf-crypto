@@ -1,6 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Crypto.Algebra.Generic where
 
+import Crypto.Integers as Int
+
 import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
 import Crypto.Algebra.Ring.QuotientRing
@@ -10,6 +12,7 @@ import Crypto.Algebra.Field.Class
 import Crypto.Algebra.ZZ
 import Crypto.Algebra.ZZN
 import Crypto.Algebra.ZZP
+import Crypto.Algebra.EC
 import Crypto.Algebra.Factor
 
 import GHC.Real as R
@@ -58,18 +61,17 @@ bsgs g h ord
       b = discreteLogBrute g h g 2 50
 
 -- |Pollard's Rho algorithm for use in solving the discrete logarithm problem.
---pollardRhoDLog :: (Integral b, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> Integer -> (a -> b) -> Maybe Integer
-    {-
+pollardRhoDLog :: (Integral b, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> Integer -> (a -> b) -> Maybe Integer
 pollardRhoDLog g h ord classify = 
-    let mapG x n
-          | classify x == 1 = n
-          | classify x == 2 = (n * 2) `mod` (ord + 1)
-          | classify x == 3 = (n + 1) `mod` (ord + 1)
-          | otherwise = error "Invalid classification function!"
-        mapH x n
-          | classify x == 1 = (n + 1) `mod` (ord + 1)
-          | classify x == 2 = (n * 2) `mod` (ord + 1)
+    let mapA x n
+          | classify x == 1 = (n + 1) `mod` ord
+          | classify x == 2 = (n * 2) `mod` ord
           | classify x == 3 = n
+          | otherwise = error "Invalid classification function!"
+        mapB x n
+          | classify x == 1 = n
+          | classify x == 2 = (n * 2) `mod` ord
+          | classify x == 3 = (n + 1) `mod` ord
           | otherwise = error "Invalid classification function!"
         mix x
           | classify x == 1 = g `gcompose` x
@@ -79,22 +81,27 @@ pollardRhoDLog g h ord classify =
         x0 = gid g
         inner x a b x' a' b' =
             let xi = mix x
-                ai = mapG x a
-                bi = mapH x b
+                ai = mapA x a
+                bi = mapB x b
                 x2i = mix (mix x')
-                a2i = mapG x' (mapG x' a')
-                b2i = mapH x' (mapH x' b')
+                a2i = mapA (mix x') (mapA x' a')
+                b2i = mapB (mix x') (mapB x' b')
+                u = (ai - a2i) `mod` ord
+                v = (bi - b2i) `mod` ord
+                (d, s, _) = Int.xgcd v ord
+                w = (abs s * u) `mod` ord
              in if xi == x2i
-                   --then (xi, ai, bi, x2i, a2i, b2i) : out
-                   then rmul <$> Just (qrcoerce (ZZ (ai - a2i)) (ZZ ord) :: ZZN) <*> rinv (qrcoerce (ZZ (b2i - bi)) (ZZ ord) :: ZZN)
-                   --else inner xi ai bi x2i a2i b2i ((xi, ai, bi, x2i, a2i, b2i) : out)
+                   --then (xi, x2i, ai, bi, a2i, b2i) : out
+                   --else inner xi ai bi x2i a2i b2i ((xi, x2i, ai, bi, a2i, b2i) : out)
+                   --then rmul <$> Just (qrcoerce (ZZ (ai - a2i)) (ZZ ord) :: ZZN) <*> rinv (qrcoerce (ZZ (b2i - bi)) (ZZ ord) :: ZZN)
+                   then w
+                   --then w `div` d
                    else inner xi ai bi x2i a2i b2i --((xi, ai, bi, x2i, a2i, b2i) : out)
-        res = inner x0 0 0 x0 0 0 --[(x0, 0, 0, x0, 0, 0)]
-     in res
+        res = inner x0 0 0 x0 0 0 --[(x0, x0, 0, 0, 0, 0)]
+     in Just res
      --in if isNothing res
      --      then Nothing
      --      else Just (toInteger (qrelement (fromJust res)))
-           -}
 
 
 
@@ -132,11 +139,13 @@ logReduce g h q e =
 
         x_n 0 = do 
             let b = pow_pow h (e-1)
+            --pollardRhoDLog m b q classifyEC
             bsgs m b q
         x_n n = do
             prevx <- x_n (n-1)
             let rterm = negpow prevx
                 b     = pow_pow (h `gcompose` rterm) (e-1-n)
+            --xn <- pollardRhoDLog m b q classifyEC
             xn <- bsgs m b q
             return $ prevx + xn * fromIntegral q ^ n
     in
@@ -156,11 +165,9 @@ pohligHellman g h factors = if isNothing res
         res                    = crtList (map (toInteger . subproblem g h) factors)
                                          (map (uncurry (^)) factors)
 
-discreteLog :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a, Integral b) => a -> a -> b -> Maybe Integer
-discreteLog g h order
+discreteLog :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> [(Integer, Integer)] -> Maybe Integer
+discreteLog g h factors
   | g == h = Just 1
   | b /= -1 = Just b
-  | otherwise = pohligHellman g h factors
-    where factors = peForm (factor pollardRhoF (toInteger order))
-          b = discreteLogBrute g h g 2 50
-
+  |otherwise = pohligHellman g h factors
+    where b = discreteLogBrute g h g 2 50

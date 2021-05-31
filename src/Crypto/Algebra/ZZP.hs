@@ -141,6 +141,6 @@ modSqrt n@(ZZP a p)
 
 
 classifyZZP (ZZP (ZZ a) (ZZ p))
-  | a < div p 3     = 1
-  | a < 2 * div p 3 = 2
-  | otherwise       = 3
+  | a <= div p 3     = 1
+  | a <= 2 * div p 3 = 2
+  | otherwise        = 3

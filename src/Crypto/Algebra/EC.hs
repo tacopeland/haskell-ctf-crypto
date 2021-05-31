@@ -4,6 +4,7 @@ import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
 import Crypto.Algebra.Ring.QuotientRing
 
+import Crypto.Algebra.ZZ
 import Crypto.Algebra.ZZP
 import Crypto.Integers
 
@@ -81,3 +82,10 @@ liftX :: ZZP -> ZZP -> ZZP -> EC
 liftX x a b = EC x y a b
     where y2 = x * x * x + a * x + b
           y = head (modSqrt y2)
+
+
+classifyEC EC_O      = 1
+classifyEC (EC _ (ZZP (ZZ y) (ZZ p)) _ _)
+  | y <= div p 3     = 1
+  | y <= 2 * div p 3 = 2
+  | otherwise        = 3
