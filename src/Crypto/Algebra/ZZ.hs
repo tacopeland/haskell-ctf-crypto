@@ -74,5 +74,5 @@ instance Integral ZZ where
 eulerPhi :: ZZ -> ZZ
 eulerPhi (ZZ 1) = ZZ 1
 eulerPhi n = product (map (\x -> n - n `div` ZZ x) factors) `div` n^(l - 1)
-    where factors = nub (factor pollardRho (toInteger n))
+    where factors = nub (factor pollardRhoF (toInteger n))
           l = length factors

@@ -1,7 +1,9 @@
+{-# LANGUAGE TupleSections #-}
 module Crypto.Algebra.Factor where
 
 import Crypto.Integers as I
 
+import Data.List
 import Math.NumberTheory.Roots
 import System.Random
 
@@ -25,8 +27,8 @@ fermatFactor n = inner a b2
             | otherwise = inner (x + 1) (y + 2 * x + 1)
 
 -- |Pollard's Rho factorization method, with mixing function f(x) = x^2 + 1 (mod n).
-pollardRho :: Integer -> Integer
-pollardRho n = inner x1 x1 c gen1
+pollardRhoF :: Integer -> Integer
+pollardRhoF n = inner x1 x1 c gen1
     where (x1, gen1) = randomR (2, n - 1) (mkStdGen 0xdeadcafe)
           (c, gen2)  = randomR (2, n - 1) gen1
           inner x y c gen
@@ -50,3 +52,10 @@ factor f n
       let p = f n
           q = n `div` p
        in factor f p ++ factor f q
+
+-- |Takes a list of factors [p1, p2, p3] and turns them into [(p1, e1), (p2, e2), ...].
+peForm :: [Integer] -> [(Integer, Integer)]
+peForm []         = []
+peForm (fac:facs) = (fac, n) : peForm ys
+    where (xs, ys) = partition (== fac) facs
+          n = toInteger (length xs + 1)

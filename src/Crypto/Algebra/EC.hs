@@ -61,13 +61,23 @@ instance AbelianGroup EC where
 
 
     {-
+       Prelude typeclasses
+    -}
+
+infixl 6 .+
+(.+) :: EC -> EC -> EC
+(.+) = gcompose
+
+infixl 7 .*
+(.*) :: Integer -> EC -> EC
+(.*) = flip gpow
+
+
+    {-
         Miscellaneous functions
     -}
 
--- Lift the first argument into the elliptic curve specified by the next two arguments.
-    {-
 liftX :: ZZP -> ZZP -> ZZP -> EC
-liftX x a b =
-    let y2 = (rpow x 3) + (a * x) + b
-        y = -- insert tonelli-shanks here
-            -}
+liftX x a b = EC x y a b
+    where y2 = x * x * x + a * x + b
+          y = head (modSqrt y2)

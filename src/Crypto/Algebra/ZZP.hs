@@ -47,7 +47,7 @@ order (ZZP a p)
   | a == ZZ 1 = 1
   | otherwise =
       let order = toInteger p - 1
-          factors = factor pollardRho order
+          factors = factor pollardRhoF order
           inner ord [] = ord
           inner ord (f:factors) = if ord `mod` f == 0
                                      then inner (ord `div` f) factors
@@ -87,7 +87,7 @@ instance QuotientRing ZZP ZZ where
     qrideal = modulus
     qrcoerce a p
       | Int.isPrime p = ZZP (a `mod` p) p
-      | otherwise = error "Trying to coerce a ZZP with composite modulus."
+      | otherwise = error ("Trying to coerce a ZZP with composite modulus: " ++ show p)
 
 
 instance Field ZZP where
@@ -138,3 +138,9 @@ modSqrt n@(ZZP a p)
           | d == rneg (rid n) = inner (c * c) (r * c) (i + 1)
           | otherwise = inner (c * c) r (i + 1)
           where Just d = rpow (r * r * inv) (2^(s - i - 1))
+
+
+classifyZZP (ZZP (ZZ a) (ZZ p))
+  | a < div p 3     = 1
+  | a < 2 * div p 3 = 2
+  | otherwise       = 3
