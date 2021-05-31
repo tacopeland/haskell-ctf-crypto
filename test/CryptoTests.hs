@@ -8,6 +8,7 @@ import Data.Maybe
 
 import GHC.Real as R
 
+import Crypto.Integers
 import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
 import Crypto.Algebra.Ring.QuotientRing
@@ -20,12 +21,11 @@ import Crypto.Algebra.ZZP
 -- Add better one later, this is slow
 newtype Prime = Prime Integer deriving Show
 
-primes = sieve [2..]
-    where sieve (p:xs) = Prime p : sieve [x | x <- xs, x `R.mod` p > 0]
+primes = filter isPrime [2..]
 
 instance Arbitrary Prime where
     arbitrary = do i <- arbitrary
-                   return $ primes!!abs i
+                   return $ Prime (primes!!abs i)
 
 getcoprime :: Integer -> Gen Integer
 getcoprime n = do a <- chooseInteger (1, n-1)

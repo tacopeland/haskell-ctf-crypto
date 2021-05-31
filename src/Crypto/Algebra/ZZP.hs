@@ -8,7 +8,7 @@ import Crypto.Algebra.Ring.Class
 import Crypto.Algebra.Ring.QuotientRing
 import Crypto.Algebra.Field.Class
 
-import Crypto.Algebra.Generic
+import Crypto.Algebra.Factor
 import Crypto.Algebra.ZZ
 
 data ZZP = ZZP { element :: ZZ, modulus :: ZZ }
@@ -36,16 +36,29 @@ zzpPow n x
                                 (binexpand x))
     | otherwise           = gpow new_n (-x)
     where new_n = ginv n
+          squares mult = iterate (\x -> x `mult` x)
 
 zzpModInv :: ZZP -> ZZP
 zzpModInv (ZZP a p) = ZZP (x `mod` p) p
     where (_, x, _) = Int.xgcd a p
 
+order (ZZP a p)
+  | a == ZZ 0 = error "Multiplicative order of zero not defined!"
+  | a == ZZ 1 = 1
+  | otherwise =
+      let order = toInteger p - 1
+          factors = factor pollardRho order
+          inner ord [] = ord
+          inner ord (f:factors) = if ord `mod` f == 0
+                                     then inner (ord `div` f) factors
+                                     else inner ord factors
+       in inner order factors
+
+
+
 instance FiniteGroup ZZP where
-    gorder (ZZP (ZZ 0) _) = error "Invalid ZZP: there is no zero element in ZZP."
-    gorder n
-      | n == gid n        = 1
-      | otherwise         = toInteger (modulus n) - 1
+    gcardinality n = toInteger (modulus n) - 1
+    gorder                = order
 
 instance AbelianGroup ZZP where
 
@@ -64,6 +77,10 @@ instance Ring ZZP where
 
 instance IdentityRing ZZP where
     rid (ZZP a p) = ZZP (ZZ 1) p
+
+instance FiniteRing ZZP where
+    rcardinality (ZZP _ p) = toInteger p
+    rorder                 = order
 
 instance QuotientRing ZZP ZZ where
     qrelement = element
@@ -95,3 +112,29 @@ instance Num ZZP where
       | a == rzero a = a
       | otherwise    = rid a
     fromInteger a = error "fromInteger not implemented for ZZP"
+
+
+    {-
+        Miscellaneous functions
+    -}
+
+-- |The Tonelli-Shanks algorithm for calculating square roots in GF(p)
+modSqrt :: ZZP -> [ZZP]
+modSqrt n@(ZZP a p)
+  | legendreSymbol a p /= 1 = []
+  | toInteger p `mod` 4 == 3 =
+    let Just root = rpow (ZZP a p) ((p + 1) `div` 4)
+     in [root, rneg root]
+  | null nonresidues = []
+  | otherwise = inner c r 1
+  where (q, s) = decomposeEven (p - 1)
+        nonresidues = filter (not . flip quadraticResidue p) (map ZZ [2..(toInteger p - 1)])
+        z = head nonresidues
+        Just inv = rinv n
+        Just c = rpow (ZZP z p) q
+        Just r = rpow n ((q + 1) `div` 2)
+        inner c r i
+          | i == s = [r, rneg r]
+          | d == rneg (rid n) = inner (c * c) (r * c) (i + 1)
+          | otherwise = inner (c * c) r (i + 1)
+          where Just d = rpow (r * r * inv) (2^(s - i - 1))

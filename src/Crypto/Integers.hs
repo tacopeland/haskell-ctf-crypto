@@ -1,9 +1,14 @@
 -- Misc functions
 module Crypto.Integers where
 
+import Data.Bits
 import Data.Maybe
 import System.Random
 
+
+-- |http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+powerOf2 :: Integer -> Bool
+powerOf2 a = a .&. (a - 1) == 0
 
 -- |Extended GCD function. Output is (g, u, v), where g = gcd a b and au + bv = g.
 xgcd :: (Integral a) => a -> a -> (a,a,a)
@@ -27,11 +32,14 @@ binexpand a
   | otherwise = 1 : leftover
   where leftover = binexpand $ a `div` 2
 
+modSquare :: (Integral a) => a -> a -> a
+modSquare x n = (x * x) `mod` n
+
 modPow :: (Integral a) => a -> a -> a -> Maybe a
 modPow a x n
     | x >= 0              = Just $ foldr (\x y -> (x * y) `mod` n) 1
                             (zipWith (\a e -> (a^e) `mod` n)
-                                (iterate (\x -> (x * x) `mod` n) a)
+                                (iterate (`modSquare` n) a)
                                 (binexpand x))
     | isNothing res       = Nothing
     | otherwise           = modPow inverse (-x) n
@@ -44,14 +52,12 @@ modInv a n
   | otherwise = Nothing
     where (g, x, _) = xgcd a n
 
-
-
-
-decomposeEven :: (Integral a) => (a, a) -> (a, a)
-decomposeEven (a, e)
-          | even a    = decomposeEven (a `div` 2, e + 1)
-          | otherwise = (a, e)
-
+-- |Turn a number of the form n into n = a*2^e. 
+decomposeEven :: (Integral a) => a -> (a, a)
+decomposeEven n = inner (n, 0)
+    where inner (a, e)
+            | even a && a > 0 = inner (a `div` 2, e + 1)
+            | otherwise       = (a, e)
 
 jacobiSymbol :: (Integral a) => a -> a -> a
 jacobiSymbol a' n'
@@ -59,7 +65,7 @@ jacobiSymbol a' n'
   | a' == 0 = 0
   | a' == 1 = 1
   | otherwise = if a == 1 then s else s * jacobiSymbol n a
-  where (a, e) = decomposeEven (a', 0)
+  where (a, e) = decomposeEven a'
         s' | even e = 1
            | (n' `mod` 8) `elem` [1,7] = 1
            | otherwise = -1
@@ -73,6 +79,7 @@ legendreSymbol a p
   | isPrime p = jacobiSymbol a p
   | otherwise = error "Second input to legendreSymbol must be prime."
 
+-- |Is `a` a quadratic residue modulo `p`?
 quadraticResidue :: (Integral a) => a -> a -> Bool
 quadraticResidue a p
   | not (isPrime p) = error "Quadratic residue checking for nonprime moduli not implemented."
@@ -81,7 +88,7 @@ quadraticResidue a p
   where s = legendreSymbol a p
 
 
--- |Tests whether an integer is prime, using 50 Miller-Rabin witnesses.
+-- |Tests whether an integer is prime, using 40 Miller-Rabin witnesses.
 isPrime :: (Integral a) => a -> Bool
 isPrime 2 = True
 isPrime n = all (millerRabin n) (take 40 $ map fromInteger (randomRs (2, toInteger (n - 2)) (mkStdGen 0xdeadcafe)))
@@ -91,7 +98,7 @@ millerRabin :: (Integral a) => a -> a -> Bool
 millerRabin n w
   | y == 1 || y == n - 1 = True
   | otherwise = inner y 1
-  where (r, s) = decomposeEven (n - 1, 0)
+  where (r, s) = decomposeEven (n - 1)
         Just y = modPow w r n
         inner t j
           | j > (s - 1) && t /= n - 1 = False

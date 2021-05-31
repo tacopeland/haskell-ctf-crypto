@@ -24,6 +24,10 @@ class (Ring a) => IdentityRing a where
 
 class (Ring a) => CommutativeRing a where
 
+class (Ring a) => FiniteRing a where
+    rcardinality :: a -> Integer
+    -- |Multiplicative order of the first argument in its ring.
+    rorder :: a -> Integer
 
     {-
         DATA TYPES AND INSTANCE DEFINITIONS

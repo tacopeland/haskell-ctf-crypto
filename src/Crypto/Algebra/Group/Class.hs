@@ -17,6 +17,7 @@ class Group a where
     gid :: a -> a
 
 class FiniteGroup a where
+    gcardinality :: a -> Integer
     gorder :: a -> Integer
 
 class AbelianGroup a where

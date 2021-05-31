@@ -11,16 +11,16 @@ import Crypto.Algebra.Field.Class
 
 
 class (Ring a, IdentityRing a) => EuclideanDomain a where
-    div :: a -> a -> (a, a)
+    divide :: a -> a -> (a, a)
     divides :: a -> a -> Bool
-    divides a b = rzero a == snd (div a b)
+    divides a b = rzero a == snd (divide a b)
     xgcd :: a -> a -> (a, a, a)
     xgcd a b =
         let x = 1
             (g, u, v)
                 | b == rzero a        = (a, rid a, rzero a)
                 | otherwise           =
-                    let (q, r) = div a b
+                    let (q, r) = divide a b
                         (g, t, t2) = xgcd b r
                     in  (g, t2, t `radd` (rneg q `rmul` t2))
             inverse = rinv g
@@ -28,8 +28,8 @@ class (Ring a, IdentityRing a) => EuclideanDomain a where
          in if isJust inverse
             then (rmul inv g, rmul inv u, rmul inv v)
             else (g, u, v)
-    mod :: a -> a -> a
-    mod a b = let (q, r) = div a b
+    modulo :: a -> a -> a
+    modulo a b = let (q, r) = divide a b
                   in r
 
 

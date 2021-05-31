@@ -10,7 +10,6 @@ import Crypto.Algebra.Ring.Class
 import Crypto.Algebra.Ring.QuotientRing
 import Crypto.Algebra.Field.Class
 
-import Crypto.Algebra.Generic
 import Crypto.Algebra.ZZ
 
 data ZZN = ZZN { element :: ZZ, modulus :: ZZ }
@@ -33,6 +32,7 @@ instance Group ZZN where
     gid (ZZN _ n) = ZZN (ZZ 1) n
 
 instance FiniteGroup ZZN where
+    gcardinality (ZZN _ (ZZ n)) = toInteger n
     gorder (ZZN (ZZ a) (ZZ n)) = toInteger (n - a)
 
 instance AbelianGroup ZZN where
@@ -58,6 +58,7 @@ zznPow n x
   | otherwise         = Just $ gpow new_n (-x)
     where inverse = rinv n
           Just new_n = inverse
+          squares mult = iterate (\x -> x `mult` x)
 
 zznModInv :: ZZN -> Maybe ZZN
 zznModInv (ZZN a p) =
@@ -69,6 +70,10 @@ zznModInv (ZZN a p) =
 
 instance IdentityRing ZZN where
     rid (ZZN a n) = ZZN (ZZ 1) n
+
+instance FiniteRing ZZN where
+    rcardinality (ZZN a n) = toInteger (eulerPhi n)
+    rorder = rcardinality
 
 instance QuotientRing ZZN ZZ where
     qrelement = element
