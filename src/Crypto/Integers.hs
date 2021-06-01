@@ -1,6 +1,8 @@
 -- Misc functions
 module Crypto.Integers where
 
+import Crypto.Helpers
+
 import Data.Bits
 import Data.Maybe
 import System.Random
@@ -24,23 +26,15 @@ coprime :: (Integral a) => a -> a -> Bool
 coprime a b = g == 1
     where (g, _, _) = xgcd a b
 
--- |Expand an integer into its binary representation.
-binexpand :: (Integral a) => a -> [a]
-binexpand 0 = []
-binexpand a 
-  | even a    = 0 : leftover
-  | otherwise = 1 : leftover
-  where leftover = binexpand $ a `div` 2
-
 modSquare :: (Integral a) => a -> a -> a
 modSquare x n = (x * x) `mod` n
 
+modMul :: (Integral a) => a -> a -> a -> a
+modMul a b n = (a * b) `mod` n
+
 modPow :: (Integral a) => a -> a -> a -> Maybe a
 modPow a x n
-    | x >= 0              = Just $ foldr (\x y -> (x * y) `mod` n) 1
-                            (zipWith (\a e -> (a^e) `mod` n)
-                                (iterate (`modSquare` n) a)
-                                (binexpand x))
+    | x >= 0              = Just (squareAndMultiply (\x y -> modMul x y n) 1 a x)
     | isNothing res       = Nothing
     | otherwise           = modPow inverse (-x) n
     where res = modInv a n

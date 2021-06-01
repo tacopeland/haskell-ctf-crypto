@@ -3,6 +3,7 @@ module Crypto.Algebra.Factor where
 
 import Crypto.Integers as I
 
+import Control.Parallel
 import Data.List
 import Math.NumberTheory.Roots
 import System.Random
@@ -51,7 +52,12 @@ factor f n
   | otherwise =
       let p = f n
           q = n `div` p
-       in factor f p ++ factor f q
+          lhs = factor f p
+          rhs = factor f q
+          force xs = go xs `pseq` ()
+              where go (_:xs) = go xs
+                    go [] = 1
+       in force rhs `par` (force lhs `pseq` (lhs ++ rhs))
 
 -- |Takes a list of factors [p1, p2, p3] and turns them into [(p1, e1), (p2, e2), ...].
 peForm :: [Integer] -> [(Integer, Integer)]

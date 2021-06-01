@@ -1,12 +1,14 @@
 module Crypto.Algebra.EC where
 
+import Crypto.Integers
+import Crypto.Helpers
+
 import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
 import Crypto.Algebra.Ring.QuotientRing
 
 import Crypto.Algebra.ZZ
 import Crypto.Algebra.ZZP
-import Crypto.Integers
 
 import Data.Maybe
 
@@ -42,19 +44,15 @@ instance Group EC where
 
 ecpow :: (Integral a) => EC -> a -> EC
 ecpow EC_O _ = EC_O
-ecpow p e
-  | e == 0 = EC_O
-  | e == 1 = p
-  | e >= 2 = foldl gcompose identity (zipWith ecpow modsquares (binexpand e))
-  | otherwise         = ecpow invmod (-e)
-  where identity = EC_O
-        invmod = ginv p
-        modsquares = iterate (\x -> gcompose x x) p
+ecpow p x
+  | x >= 0            = squareAndMultiply gcompose EC_O p x
+  | otherwise         = ecpow invmod (-x)
+  where invmod = ginv p
 
 instance CyclicGroup EC where
 
 instance FiniteGroup EC where
-    -- TODO
+    -- TODO: SEA algorithm (Schoof, Elkies and Atkin)
     gcardinality _ = 1
     gorder _ = 1
         
@@ -88,6 +86,3 @@ liftX :: ZZP -> ZZP -> ZZP -> EC
 liftX x a b = EC x y a b
     where y2 = x * x * x + a * x + b
           y = head (modSqrt y2)
-
-
-

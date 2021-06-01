@@ -4,6 +4,7 @@ module Crypto.Algebra.ZZN where
 import Data.Maybe
 
 import Crypto.Integers as Int
+import Crypto.Helpers
 
 import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
@@ -53,7 +54,7 @@ instance Ring ZZN where
 
 zznPow :: (Integral a) => ZZN -> a -> Maybe ZZN
 zznPow n x
-  | x >= 0            = Just (foldr gcompose (gid n) (zipWith (\(ZZN a p) e -> ZZN ((a^e) `mod` p) p) (squares rmul n) (binexpand x)))
+  | x >= 0            = Just (squareAndMultiply rmul (rid n) n x)
   | isNothing inverse = Nothing
   | otherwise         = Just $ gpow new_n (-x)
     where inverse = rinv n

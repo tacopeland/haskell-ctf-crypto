@@ -2,6 +2,7 @@
 module Crypto.Algebra.ZZP where
 
 import Crypto.Integers as Int
+import Crypto.Helpers
 
 import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
@@ -30,13 +31,9 @@ instance Group ZZP where
 
 zzpPow :: (Integral a) => ZZP -> a -> ZZP
 zzpPow n x
-    | x >= 0              = foldr gcompose (gid n)
-                            (zipWith (\(ZZP a p) e -> ZZP ((a^e) `mod` p) p)
-                                (squares gcompose n)
-                                (binexpand x))
-    | otherwise           = gpow new_n (-x)
-    where new_n = ginv n
-          squares mult = iterate (\x -> x `mult` x)
+  | x >= 0    = squareAndMultiply gcompose (gid n) n x
+  | otherwise = gpow new_n (-x)
+  where new_n = ginv n
 
 zzpModInv :: ZZP -> ZZP
 zzpModInv (ZZP a p) = ZZP (x `mod` p) p
