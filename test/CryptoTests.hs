@@ -16,6 +16,9 @@ import Crypto.Algebra.Field.Class
 import Crypto.Algebra.Domain.Class as D
 import Crypto.Algebra.ZZ
 import Crypto.Algebra.ZZP
+import Crypto.Algebra.EC
+import Crypto.Algebra.Generic
+import Crypto.Algebra.Factor
 
 -- https://stackoverflow.com/a/5055626
 -- Add better one later, this is slow
@@ -161,6 +164,19 @@ prop_ZZPMulIdentity x (Prime p) =
     let res1 = logreduce g h order 1
         res2 = bsgs g h order
      in res1 == res2
+     -}
+
+    {-
+prop_discreteLog :: Bool
+prop_discreteLog =
+    let
+        p = ZZ 99061670249353652702595159229088680425828208953931838069069584252923270946291
+        x = ZZ 6082896373499126624029343293750138460137531774473450341235217699497602895121
+        a = ZZ 1
+        b = ZZ 4
+        ord = 99061670249353652702595159229088680426160873357666659718134032418967620849171
+        g = liftX (ZZP x p) (ZZP a p) (ZZP b p)
+     in discreteLog g (100 .* g) (peForm (factor pollardRhoF ord)) == Just 100
      -}
 
 

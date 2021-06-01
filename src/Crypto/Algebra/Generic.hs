@@ -17,6 +17,7 @@ import Crypto.Algebra.Factor
 
 import GHC.Real as R
 
+import Control.Parallel.Strategies
 import Data.List
 import Data.Maybe
 import Debug.Trace
@@ -61,8 +62,11 @@ bsgs g h ord
       b = discreteLogBrute g h g 2 50
 
 -- |Pollard's Rho algorithm for use in solving the discrete logarithm problem.
-pollardRhoDLog :: (Integral b, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> Integer -> (a -> b) -> Maybe Integer
-pollardRhoDLog g h ord classify = 
+pollardRhoDLog :: (Part3 a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> Integer -> Maybe Integer
+pollardRhoDLog g h ord
+  | g == h = Just 1
+  | b /= (-1) = Just b
+  | otherwise =
     let mapA x n
           | classify x == 1 = (n + 1) `mod` ord
           | classify x == 2 = (n * 2) `mod` ord
@@ -83,25 +87,23 @@ pollardRhoDLog g h ord classify =
             let xi = mix x
                 ai = mapA x a
                 bi = mapB x b
-                x2i = mix (mix x')
-                a2i = mapA (mix x') (mapA x' a')
-                b2i = mapB (mix x') (mapB x' b')
+                x2i' = mix x'
+                x2i = mix x2i'
+                a2i = mapA x2i' (mapA x' a')
+                b2i = mapB x2i' (mapB x' b')
                 u = (ai - a2i) `mod` ord
-                v = (bi - b2i) `mod` ord
+                v = (b2i - bi) `mod` ord
                 (d, s, _) = Int.xgcd v ord
-                w = (abs s * u) `mod` ord
+                w = (s * u) `mod` ord
+                newOrd = ord `div` d
              in if xi == x2i
-                   --then (xi, x2i, ai, bi, a2i, b2i) : out
-                   --else inner xi ai bi x2i a2i b2i ((xi, x2i, ai, bi, a2i, b2i) : out)
-                   --then rmul <$> Just (qrcoerce (ZZ (ai - a2i)) (ZZ ord) :: ZZN) <*> rinv (qrcoerce (ZZ (b2i - bi)) (ZZ ord) :: ZZN)
-                   then w
-                   --then w `div` d
-                   else inner xi ai bi x2i a2i b2i --((xi, ai, bi, x2i, a2i, b2i) : out)
-        res = inner x0 0 0 x0 0 0 --[(x0, x0, 0, 0, 0, 0)]
-     in Just res
-     --in if isNothing res
-     --      then Nothing
-     --      else Just (toInteger (qrelement (fromJust res)))
+                   then filter (\x -> gpow g x == h) (map (\k -> (w `div` d) + k * newOrd) [0..(d - 1)])
+                   else inner xi ai bi x2i a2i b2i
+        res = inner x0 0 0 x0 0 0 --[]
+     in if null res
+           then Nothing
+           else Just (head res)
+     where b = discreteLogBrute g h g 2 50
 
 
 
@@ -128,7 +130,7 @@ crtList :: [Integer] -> [Integer] -> Maybe ZZN
 crtList a b = crt (zipWith (\x y -> qrcoerce (ZZ x) (ZZ y)) a b)
 
 -- |Algorithm to reduce discrete logarithm for an element with prime power order.
-logReduce :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a, Integral b, Integral c) => a -> a -> b -> c -> Maybe Integer
+logReduce :: (Part3 a, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> Integer -> Integer -> Maybe Integer
 logReduce g h q e =
     let
         -- (g^q^(exp-1)^x_n = (h*g^(-x))^(exp-1-n)
@@ -140,13 +142,13 @@ logReduce g h q e =
         x_n 0 = do 
             let b = pow_pow h (e-1)
             --pollardRhoDLog m b q classifyEC
-            bsgs m b q
+            pollardRhoDLog m b q
         x_n n = do
             prevx <- x_n (n-1)
             let rterm = negpow prevx
                 b     = pow_pow (h `gcompose` rterm) (e-1-n)
             --xn <- pollardRhoDLog m b q classifyEC
-            xn <- bsgs m b q
+            xn <- pollardRhoDLog m b q
             return $ prevx + xn * fromIntegral q ^ n
     in
         x_n (e - 1)
@@ -154,7 +156,7 @@ logReduce g h q e =
 
 -- |Calculates the discrete logarithm g^x = h, where 'factors' are
 -- the factors of g's order within its group.
-pohligHellman :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> [(Integer, Integer)] -> Maybe Integer
+pohligHellman :: (Part3 a, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> [(Integer, Integer)] -> Maybe Integer
 pohligHellman g h factors = if isNothing res
                                then Nothing
                                else return (fromIntegral . toInteger . qrelement $ fromJust res)
@@ -162,10 +164,10 @@ pohligHellman g h factors = if isNothing res
         ord                    = foldr (\x acc -> acc * uncurry (^) x) 1 factors
         tmp t (q,e)            = gpow t (ord `R.div` (q^e))
         subproblem a b x@(q,e) = fromJust $ logReduce (tmp a x) (tmp b x) q e
-        res                    = crtList (map (toInteger . subproblem g h) factors)
+        res                    = crtList (parMap rdeepseq (toInteger . subproblem g h) factors)
                                          (map (uncurry (^)) factors)
 
-discreteLog :: (CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> [(Integer, Integer)] -> Maybe Integer
+discreteLog :: (Part3 a, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> [(Integer, Integer)] -> Maybe Integer
 discreteLog g h factors
   | g == h = Just 1
   | b /= -1 = Just b

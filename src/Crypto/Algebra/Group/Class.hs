@@ -23,3 +23,7 @@ class FiniteGroup a where
 class AbelianGroup a where
 
 class CyclicGroup a where
+
+-- |For groups whose sets can be partitioned into 3 of roughly equal length, for use in Pollard's Rho discrete logarithms.
+class Part3 a where
+    classify :: a -> Integer

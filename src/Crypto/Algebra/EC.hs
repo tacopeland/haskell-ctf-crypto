@@ -60,6 +60,12 @@ instance FiniteGroup EC where
         
 instance AbelianGroup EC where
 
+instance Part3 EC where
+    classify EC_O      = 1
+    classify (EC _ (ZZP (ZZ y) (ZZ p)) _ _)
+      | y <= div p 3     = 1
+      | y <= 2 * div p 3 = 2
+      | otherwise        = 3
 
     {-
        Prelude typeclasses
@@ -84,8 +90,4 @@ liftX x a b = EC x y a b
           y = head (modSqrt y2)
 
 
-classifyEC EC_O      = 1
-classifyEC (EC _ (ZZP (ZZ y) (ZZ p)) _ _)
-  | y <= div p 3     = 1
-  | y <= 2 * div p 3 = 2
-  | otherwise        = 3
+

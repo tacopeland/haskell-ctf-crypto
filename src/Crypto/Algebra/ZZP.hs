@@ -64,6 +64,13 @@ instance AbelianGroup ZZP where
 
 instance CyclicGroup ZZP where
 
+instance Part3 ZZP where
+    classify (ZZP (ZZ a) (ZZ p))
+      | a <= div p 3     = 1
+      | a <= 2 * div p 3 = 2
+      | otherwise        = 3
+
+
 -- |Ring Z/pZ.
 instance Ring ZZP where
     rzero (ZZP _ p)  = ZZP (ZZ 0) p
@@ -140,7 +147,3 @@ modSqrt n@(ZZP a p)
           where Just d = rpow (r * r * inv) (2^(s - i - 1))
 
 
-classifyZZP (ZZP (ZZ a) (ZZ p))
-  | a <= div p 3     = 1
-  | a <= 2 * div p 3 = 2
-  | otherwise        = 3
