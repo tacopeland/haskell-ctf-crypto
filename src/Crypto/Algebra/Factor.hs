@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 module Crypto.Algebra.Factor where
 
 import Crypto.Integers as I
@@ -21,7 +20,7 @@ pollardP1 n = inner 2 2 n
 -- |Fermat's factorization method for when p - q < n^(1/4).
 fermatFactor :: Integer -> Integer
 fermatFactor n = inner a b2
-    where a = toInteger (ceiling (sqrt (fromIntegral n)))
+    where a = integerSquareRoot n
           b2 = a * a - n
           inner x y
             | isSquare y = x - integerSquareRoot y
