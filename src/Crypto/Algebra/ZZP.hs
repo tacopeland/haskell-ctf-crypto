@@ -39,23 +39,23 @@ zzpModInv :: ZZP -> ZZP
 zzpModInv (ZZP a p) = ZZP (x `mod` p) p
     where (_, x, _) = Int.xgcd a p
 
-order (ZZP a p)
+order n@(ZZP a p)
   | a == ZZ 0 = error "Multiplicative order of zero not defined!"
   | a == ZZ 1 = 1
   | otherwise =
-      let order = toInteger p - 1
-          factors = factor pollardRhoF order
+      let ord = toInteger p - 1
+          factors = factor pollardRhoF ord
           inner ord [] = ord
-          inner ord (f:factors) = if ord `mod` f == 0
+          inner ord (f:factors) = if zzpPow n (ord `div` f) == gid n
                                      then inner (ord `div` f) factors
                                      else inner ord factors
-       in inner order factors
+       in inner ord factors
 
 
 
 instance FiniteGroup ZZP where
     gcardinality n = toInteger (modulus n) - 1
-    gorder                = order
+    gorder         = order
 
 instance AbelianGroup ZZP where
 

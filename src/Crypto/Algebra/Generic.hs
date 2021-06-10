@@ -2,6 +2,7 @@
 module Crypto.Algebra.Generic where
 
 import Crypto.Integers as Int
+import Crypto.Helpers
 
 import Crypto.Algebra.Group.Class
 import Crypto.Algebra.Ring.Class
@@ -36,8 +37,6 @@ discreteLogBrute g h x i n
          then i
          else discreteLogBrute g h newX (i + 1) n
 
-
-
 -- |Shanks' Baby-Step Giant-Step discrete logarithm algorithm.
 bsgs :: (Integral b, CyclicGroup a, FiniteGroup a, AbelianGroup a, Group a, Eq a) => a -> a -> b -> Maybe Integer
 bsgs g h ord
@@ -52,11 +51,10 @@ bsgs g h ord
         bstep = genericTake n $ babystep g
         gstep = genericTake n $ giantstep h u
     -- Get the output from this match
-    in case bstep `intersect` gstep of
-        [] -> Nothing
-        (match:_) -> R.mod <$> val <*> Just (fromIntegral ord)
-            where getInd = elemIndex match
-                  val = (\x y -> toInteger x + y) <$> getInd bstep <*> ((\x -> n * toInteger x) <$> getInd gstep)
+    in case collide bstep gstep [] 0 of
+         Nothing            -> Nothing
+         Just (match, i, j) -> Just (R.mod val (fromIntegral ord))
+            where val = toInteger i + n * toInteger j
   where 
       -- Try the first 50 powers of g before moving onto BSGS
       b = discreteLogBrute g h g 2 50
