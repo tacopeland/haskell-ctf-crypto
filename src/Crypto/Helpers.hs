@@ -1,6 +1,7 @@
 module Crypto.Helpers where
 
 import Data.List
+import qualified Data.Map as Map
 import Data.Maybe
 
 -- |Generates a list of squares given a multiplication function.
@@ -33,3 +34,19 @@ collide (x:xs) (y:ys) l index
   | otherwise = collide xs ys (x:y:l) (index + 1)
   where getInd = (-) (length l - 1) . fromJust . flip elemIndex l
 collide _ _ _ _ = Nothing
+
+
+-- |Get frequency analysis of a list.
+freqTable :: (Ord a) => [a] -> [(a, Integer)]
+freqTable l = Map.toList (Map.fromListWith (+) [(c, 1) | c <- l])
+
+-- |Get local maxima of a list.
+localMaxima :: (Ord a) => [a] -> [a]
+localMaxima [] = []
+localMaxima [x] = [x]
+localMaxima [x, y]
+  | y > x = [y]
+  | otherwise = []
+localMaxima (x:y:z:rest)
+  | y > x && y > z = y : localMaxima (y:z:rest)
+  | otherwise = localMaxima (y:z:rest)

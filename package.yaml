@@ -25,10 +25,12 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
-    - split
+    - bytestring
+    - containers
     - integer-roots
-    - random
     - parallel
+    - random
+    - split
   extra-deps:
     - git: git@github.com:martinra/hflint.git
       commit: 5c96ece2b72170b60f01632103f03f4654a0fb4e
