@@ -4,7 +4,7 @@ github:              "tacopeland/haskell-ctf-crypto"
 license:             BSD3
 author:              "Timothy Copeland"
 maintainer:          "timcopeland1111@gmail.com"
-copyright:           "2021 Timothy Copeland"
+copyright:           "2022 Timothy Copeland"
 
 extra-source-files:
 - README.md
@@ -31,9 +31,7 @@ library:
     - parallel
     - random
     - split
-  extra-deps:
-    - git: git@github.com:martinra/hflint.git
-      commit: 5c96ece2b72170b60f01632103f03f4654a0fb4e
+    - matrix
 
 tests:
   haskell-ctf-crypto-test:
