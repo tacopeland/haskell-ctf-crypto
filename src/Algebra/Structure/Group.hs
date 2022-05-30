@@ -1,10 +1,4 @@
-module Crypto.Algebra.Group.Class where
-
-import Data.List
-import Data.Maybe
-
-import Crypto.Integers
-
+module Algebra.Structure.Group where
 
     {-
         TYPECLASS DEFINITIONS

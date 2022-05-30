@@ -1,16 +1,17 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Crypto.Algebra.ZZP where
+module Algebra.ZZP (ZZP(..), modSqrt) where
 
-import Crypto.Integers as Int
-import Crypto.Helpers
+import Helpers
+import NumberTheory.Basic (xgcd)
+import NumberTheory.Factor (factor, pollardRhoF)
+import NumberTheory.Primes (isPrime)
+import NumberTheory.Integers (legendreSymbol, quadraticResidue)
 
-import Crypto.Algebra.Group.Class
-import Crypto.Algebra.Ring.Class
-import Crypto.Algebra.Ring.QuotientRing
-import Crypto.Algebra.Field.Class
+import Algebra.Structure.Group
+import Algebra.Structure.Ring
+import Algebra.Structure.Field
 
-import Crypto.Algebra.Factor
-import Crypto.Algebra.ZZ
+import Algebra.ZZ
 
 data ZZP = ZZP { element :: ZZ, modulus :: ZZ }
     deriving (Show, Eq)
@@ -37,7 +38,7 @@ zzpPow n x
 
 zzpModInv :: ZZP -> ZZP
 zzpModInv (ZZP a p) = ZZP (x `mod` p) p
-    where (_, x, _) = Int.xgcd a p
+    where (_, x, _) = xgcd a p
 
 order n@(ZZP a p)
   | a == ZZ 0 = error "Multiplicative order of zero not defined!"
@@ -90,7 +91,7 @@ instance QuotientRing ZZP ZZ where
     qrelement = element
     qrideal = modulus
     qrcoerce a p
-      | Int.isPrime p = ZZP (a `mod` p) p
+      | isPrime p = ZZP (a `mod` p) p
       | otherwise = error ("Trying to coerce a ZZP with composite modulus: " ++ show p)
 
 
@@ -109,7 +110,7 @@ instance Ord ZZP where
 
 instance Num ZZP where
     (+)        = radd
-    negate a   = rneg a
+    negate     = rneg
     (*)        = rmul
     abs a      = a
     signum a
@@ -142,5 +143,3 @@ modSqrt n@(ZZP a p)
           | d == rneg (rid n) = inner (c * c) (r * c) (i + 1)
           | otherwise = inner (c * c) r (i + 1)
           where Just d = rpow (r * r * inv) (2^(s - i - 1))
-
-

@@ -6,19 +6,17 @@ import Test.QuickCheck.All
 
 import Data.Maybe
 
-import GHC.Real as R
-
-import Crypto.Integers
-import Crypto.Algebra.Group.Class
-import Crypto.Algebra.Ring.Class
-import Crypto.Algebra.Ring.QuotientRing
-import Crypto.Algebra.Field.Class
-import Crypto.Algebra.Domain.Class as D
-import Crypto.Algebra.ZZ
-import Crypto.Algebra.ZZP
-import Crypto.Algebra.EC
-import Crypto.Algebra.Generic
-import Crypto.Algebra.Factor
+import NumberTheory.Primes
+import NumberTheory.Factor
+import Algebra.Structure.Group
+import Algebra.Structure.Ring
+import Algebra.Structure.Field
+import Algebra.Structure.Domain
+import Algebra.ZZ
+import Algebra.ZZN
+import Algebra.ZZP
+import Algebra.EC
+import Algebra.Generic
 
 -- https://stackoverflow.com/a/5055626
 -- Add better one later, this is slow
@@ -149,41 +147,6 @@ prop_ZZPMulIdentity x (Prime p) =
      in rid n * n == n &&
         n * rid n == n
 
-    {-
--- BSGS
---prop_bsgsZZP :: BSGSZZP -> Bool
---prop_bsgsZZP (BSGSZZP (g@(ZZP _ p), h, order)) =
-    let res = bsgs g h order in
-        if isNothing res
-           then if order /= p then True else False
-           else gpow g (fromJust res) == h
-
--- Pohlig-Hellman (I'll make more tests when I have a factorization routine)
---prop_logreduceZZP :: BSGSZZP -> Bool
---prop_logreduceZZP (BSGSZZP (g, h, order)) =
-    let res1 = logreduce g h order 1
-        res2 = bsgs g h order
-     in res1 == res2
-     -}
-
-    {-
-prop_discreteLog :: Bool
-prop_discreteLog =
-    let
-        p = ZZ 99061670249353652702595159229088680425828208953931838069069584252923270946291
-        x = ZZ 6082896373499126624029343293750138460137531774473450341235217699497602895121
-        a = ZZ 1
-        b = ZZ 4
-        ord = 99061670249353652702595159229088680426160873357666659718134032418967620849171
-        g = liftX (ZZP x p) (ZZP a p) (ZZP b p)
-     in discreteLog g (100 .* g) (peForm (factor pollardRhoF ord)) == Just 100
-
-prop_factor :: Bool
-prop_factor =
-    let n = 580642391898843192929563856870897799650883152718761762932292482252152591279871421569162037190419036435041797739880389529593674485555792234900969402019055601781662044515999210032698275981631376651117318677368742867687180140048715627160641771118040372573575479330830092989800730105573700557717146251860588802509310534792310748898504394966263819959963273509119791037525504422606634640173277598774814099540555569257179715908642917355365791447508751401889724095964924513196281345665480688029639999472649549163147599540142367575413885729653166517595719991872223011969856259344396899748662101941230745601719730556631637
-     in length (factor fermatFactor n) == 30
-
-     -}
 
 return []
 runTests :: IO Bool

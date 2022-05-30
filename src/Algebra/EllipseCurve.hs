@@ -1,12 +1,13 @@
 -- |Made to solve CryptoHack's Ellipse Curve Cryptography challenge.
-module Crypto.Algebra.EllipseCurve where
+module Algebra.EllipseCurve (EllipseCurve(..)) where
 
-import Crypto.Helpers
+import Helpers
 
-import Crypto.Algebra.Group.Class
-import Crypto.Algebra.Ring.QuotientRing
-import Crypto.Algebra.ZZ
-import Crypto.Algebra.ZZP
+import Algebra.Structure.Group
+import Algebra.Structure.Ring
+
+import Algebra.ZZ
+import Algebra.ZZP
 
 data EllipseCurve = EllipseCurve { elcX :: ZZP, elcY :: ZZP, elcD :: ZZP }
     deriving (Show,Eq)

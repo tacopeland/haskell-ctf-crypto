@@ -1,22 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module Crypto.Algebra.Generic where
+module Algebra.Generic where
 
-import Crypto.Integers as Int
-import Crypto.Helpers
+import Helpers
 
-import Crypto.Algebra.Group.Class
-import Crypto.Algebra.Ring.Class
-import Crypto.Algebra.Ring.QuotientRing
-import Crypto.Algebra.Domain.Class as D
-import Crypto.Algebra.Field.Class
+import Algebra.Structure.Group
+import Algebra.Structure.Ring
+import Algebra.Structure.Domain
+import Algebra.Structure.Field
 
-import Crypto.Algebra.ZZ
-import Crypto.Algebra.ZZN
-import Crypto.Algebra.ZZP
-import Crypto.Algebra.EC
-import Crypto.Algebra.Factor
-
-import GHC.Real as R
+import Algebra.ZZ
+import Algebra.ZZN
+import Algebra.ZZP
+import Algebra.EC
 
 import Control.Parallel.Strategies
 import Data.List
@@ -53,7 +48,7 @@ bsgs g h ord
     -- Get the output from this match
     in case collide bstep gstep [] 0 of
          Nothing            -> Nothing
-         Just (match, i, j) -> Just (R.mod val (fromIntegral ord))
+         Just (match, i, j) -> Just (mod val (fromIntegral ord))
             where val = toInteger i + n * toInteger j
   where 
       -- Try the first 50 powers of g before moving onto BSGS
@@ -91,7 +86,7 @@ pollardRhoDLog g h ord
                 b2i = mapB x2i' (mapB x' b')
                 u = (ai - a2i) `mod` ord
                 v = (b2i - bi) `mod` ord
-                (d, s, _) = Int.xgcd v ord
+                (d, s, _) = xgcd v ord
                 w = (s * u) `mod` ord
                 newOrd = ord `div` d
              in if xi == x2i
@@ -160,7 +155,7 @@ pohligHellman g h factors = if isNothing res
                                else return (fromIntegral . toInteger . qrelement $ fromJust res)
     where
         ord                    = foldr (\x acc -> acc * uncurry (^) x) 1 factors
-        tmp t (q,e)            = gpow t (ord `R.div` (q^e))
+        tmp t (q,e)            = gpow t (ord `div` (q^e))
         subproblem a b x@(q,e) = fromJust $ logReduce (tmp a x) (tmp b x) q e
         res                    = crtList (parMap rdeepseq (toInteger . subproblem g h) factors)
                                          (map (uncurry (^)) factors)

@@ -1,17 +1,18 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Crypto.Algebra.ZZN where
+module Algebra.ZZN where
+
+import Helpers
+import NumberTheory.Basic
+import NumberTheory.Integers
+
+import Algebra.Structure.Group
+import Algebra.Structure.Ring
+import Algebra.Structure.Field
+
+import Algebra.ZZ
 
 import Data.Maybe
 
-import Crypto.Integers as Int
-import Crypto.Helpers
-
-import Crypto.Algebra.Group.Class
-import Crypto.Algebra.Ring.Class
-import Crypto.Algebra.Ring.QuotientRing
-import Crypto.Algebra.Field.Class
-
-import Crypto.Algebra.ZZ
 
 data ZZN = ZZN { element :: ZZ, modulus :: ZZ }
     deriving (Show, Eq)
@@ -63,7 +64,7 @@ zznPow n x
 
 zznModInv :: ZZN -> Maybe ZZN
 zznModInv (ZZN a p) =
-    let (g, x, _) = Int.xgcd a p
+    let (g, x, _) = xgcd a p
     in if g == 1
           then Just (ZZN (x `mod` p) p)
           else Nothing
@@ -73,7 +74,7 @@ instance IdentityRing ZZN where
     rid (ZZN a n) = ZZN (ZZ 1) n
 
 instance FiniteRing ZZN where
-    rcardinality (ZZN a n) = toInteger (eulerPhi n)
+    rcardinality (ZZN _ (ZZ n)) = toInteger (eulerPhi n)
     rorder = rcardinality
 
 instance QuotientRing ZZN ZZ where
@@ -94,7 +95,7 @@ instance Ord ZZN where
 
 instance Num ZZN where
     (+)        = radd
-    negate a   = rneg a
+    negate     = rneg
     (*)        = rmul
     abs a      = a
     signum a

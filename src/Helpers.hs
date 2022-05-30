@@ -1,5 +1,6 @@
-module Crypto.Helpers where
+module Helpers where
 
+import Data.Bits ((.&.))
 import Data.List
 import qualified Data.Map as Map
 import Data.Maybe
@@ -50,3 +51,14 @@ localMaxima [x, y]
 localMaxima (x:y:z:rest)
   | y > x && y > z = y : localMaxima (y:z:rest)
   | otherwise = localMaxima (y:z:rest)
+
+-- |Turn a number of the form n into a*2^e. 
+decomposeEven :: (Integral a) => a -> (a, a)
+decomposeEven n = inner (n, 0)
+    where inner (a, e)
+            | even a && a > 0 = inner (a `div` 2, e + 1)
+            | otherwise       = (a, e)
+
+-- |http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+powerOf2 :: Integer -> Bool
+powerOf2 a = a .&. (a - 1) == 0

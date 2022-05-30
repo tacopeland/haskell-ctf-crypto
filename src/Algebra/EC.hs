@@ -1,14 +1,17 @@
-module Crypto.Algebra.EC where
+module Algebra.EC
+    (EC(..),
+    (.+),
+    (.*),
+    liftX)
+    where
 
-import Crypto.Integers
-import Crypto.Helpers
+import Helpers
 
-import Crypto.Algebra.Group.Class
-import Crypto.Algebra.Ring.Class
-import Crypto.Algebra.Ring.QuotientRing
+import Algebra.Structure.Group
+import Algebra.Structure.Ring
 
-import Crypto.Algebra.ZZ
-import Crypto.Algebra.ZZP
+import Algebra.ZZ
+import Algebra.ZZP
 
 import Data.Maybe
 

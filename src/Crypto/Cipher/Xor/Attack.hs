@@ -1,11 +1,11 @@
 module Crypto.Cipher.Xor.Attack where
 
+import Helpers
+
 import qualified Data.ByteString as B
 import Data.List
 import Data.Maybe
 import Data.Ord
-
-import Crypto.Helpers
 
 
     {-

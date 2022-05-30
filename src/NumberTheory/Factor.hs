@@ -1,6 +1,13 @@
-module Crypto.Algebra.Factor where
+module NumberTheory.Factor
+    (pollardP1,
+    fermatFactor,
+    pollardRhoF,
+    factor,
+    peForm
+    ) where
 
-import Crypto.Integers as I
+import NumberTheory.Modular
+import NumberTheory.Primes
 
 import Control.Parallel
 import Data.List
@@ -38,10 +45,11 @@ pollardRhoF n = inner x1 x1 c gen1
                  in inner xi yi newC newGen
             | d > 1 = d
             | otherwise = inner xi yi c gen
-           where mix a = (modSquare a n + c) `mod` n
-                 xi = mix x
-                 yi = mix (mix y)
-                 d = gcd ((yi - xi) `mod` n) n
+            where modSquare a n = (a * a) `mod` n
+                  mix a = (modSquare a n + c) `mod` n
+                  xi = mix x
+                  yi = mix (mix y)
+                  d = gcd ((yi - xi) `mod` n) n
 
 -- |Takes as input a function that returns a single factor and a number and fully factorizes that number.
 factor :: (Integer -> Integer) -> Integer -> [Integer]

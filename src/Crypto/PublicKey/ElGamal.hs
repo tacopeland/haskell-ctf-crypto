@@ -1,51 +1,43 @@
 module Crypto.PublicKey.ElGamal where
 
+import NumberTheory.Modular
+import Algebra.Structure.Ring
+import Algebra.Structure.Field
+import Algebra.ZZ
+import Algebra.ZZP
 
 import Data.List
 import Data.Maybe
 import Math.NumberTheory.Roots
 
-import System.IO.Unsafe
 import System.Random
 
-import Crypto.Integers
-import Crypto.Algebra.Ring.Class
-import Crypto.Algebra.Field.Class
-import Crypto.Algebra.ZZ
-import Crypto.Algebra.ZZP
 
-
-class ElGamalKey a where
-    encrypt :: a -> Integer -> (Integer, Integer)
-
-
-data ElGamalPubKey
+data ElGamalKey =
     -- | Accepts the generator g, the modulus p, and the public key A.
-    = ElGamalPubKey Integer Integer Integer
-    deriving (Show)
-
-data ElGamalPrivKey
+      ElGamalPubKey {keyG :: Integer, keyP :: Integer, keyPubA :: Integer}
     -- | Accepts the generator g, the modulus p, and the secret a.
-    = ElGamalPrivKey Integer Integer Integer
+    | ElGamalPrivKey {keyG :: Integer, keyP :: Integer, keyPrivA :: Integer}
     deriving (Show)
 
-instance ElGamalKey ElGamalPubKey where
-    encrypt (ElGamalPubKey g p pubA) m = (c1, c2)
-        where k = unsafePerformIO $ randomRIO (2, p)
-              (ZZP (ZZ c1) _) = fpow (ZZP (ZZ g) (ZZ p)) k
-              (ZZP (ZZ c2) _) = rmul (ZZP (ZZ m) (ZZ p)) (fromJust $ rpow (ZZP (ZZ pubA) (ZZ p)) k)
+encrypt (ElGamalPubKey g p pubA) m = (c1, c2)
+    where stdGen  = mkStdGen 0xdeadcafe
+          (k, _)  = randomR (2, p) stdGen
+          Just c1 = modPow g k p
+          c2      = (m * fromJust (modPow pubA k p)) `mod` p
 
-instance ElGamalKey ElGamalPrivKey where
-    encrypt (ElGamalPrivKey g p a) m = (c1, c2)
-        where Just (ZZP (ZZ pubA) _) = rpow (ZZP (ZZ g) (ZZ p)) a
-              k = unsafePerformIO $ randomRIO (2, p)
-              (ZZP (ZZ c1) _) = fpow (ZZP (ZZ g) (ZZ p)) k
-              (ZZP (ZZ c2) _) = rmul (ZZP (ZZ m) (ZZ p)) (fromJust $ rpow (ZZP (ZZ pubA) (ZZ p)) k)
+encrypt (ElGamalPrivKey g p a) m = (c1, c2)
+    where stdGen    = mkStdGen 0xdeadcafe
+          (k, _)    = randomR (2, p) stdGen
+          Just pubA = modPow g a p
+          Just c1   = modPow g k p
+          c2        = (m * fromJust (modPow pubA k p)) `mod` p
 
-decrypt :: ElGamalPrivKey -> (Integer, Integer) -> Integer
+decrypt :: ElGamalKey -> (Integer, Integer) -> Maybe Integer
+decrypt (ElGamalPubKey {}) _ = Nothing
 decrypt (ElGamalPrivKey g p a) (c1, c2) = m
-    where Just x = rpow (ZZP (ZZ c1) (ZZ p)) (-a)
-          (ZZP (ZZ m) _) = rmul x (ZZP (ZZ c2) (ZZ p))
+    where x = modPow c1 (-1) p
+          m = x >>= (\x' -> Just ((x' * c2) `mod` p))
 
 {-
 constructNE :: Integer -> Integer -> ElGamalPubKey

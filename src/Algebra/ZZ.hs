@@ -1,11 +1,7 @@
-module Crypto.Algebra.ZZ where
+module Algebra.ZZ (ZZ(..)) where
 
-import Crypto.Algebra.Ring.Class
-import qualified Crypto.Algebra.Domain.Class as D
-
-import Crypto.Algebra.Factor
-
-import Data.List
+import Algebra.Structure.Ring
+import Algebra.Structure.Domain
 
     {-
        Internal typeclasses
@@ -31,7 +27,7 @@ instance IdentityRing ZZ where
 
 instance CommutativeRing ZZ where
 
-instance D.EuclideanDomain ZZ where
+instance IntegralDomain ZZ where
     divide = quotRem
 
 
@@ -51,7 +47,7 @@ instance Num ZZ where
       | a < 0  = ZZ (-1)
       | a > 0  = ZZ 1
       | otherwise = ZZ 0
-    fromInteger i = ZZ i
+    fromInteger = ZZ
 
 instance Enum ZZ where
     toEnum a        = ZZ (toInteger a)
@@ -64,15 +60,3 @@ instance Integral ZZ where
     quotRem (ZZ a) (ZZ b) = (ZZ x, ZZ y)
         where (x, y) = quotRem a b
     toInteger (ZZ a) = a
-
-
-    {-
-        Miscellaneous functions
-    -}
-
--- n * product (1 - 1/p)
-eulerPhi :: ZZ -> ZZ
-eulerPhi (ZZ 1) = ZZ 1
-eulerPhi n = product (map (\x -> n - n `div` ZZ x) factors) `div` n^(l - 1)
-    where factors = nub (factor pollardRhoF (toInteger n))
-          l = length factors

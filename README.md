@@ -3,9 +3,12 @@ A cryptography library in Haskell meant for use in GHCi and short scripts.
 The main purpose of this library is quickly solving CTF problems.
 
 ## To do:
+- [x] Refactor.
+- [ ] Implement Number Theoretic Transform.
+- [ ] Rewrite tests.
+- [ ] Use high-performance libraries for things like matrix operations and polynomial multiplication.
 - [ ] Implement polynomial rings.
 - [x] Implement primality tests (Miller-Rabin).
-- [ ] ~~Implement Number Theoretic Transform.~~
 - [ ] ~~Implement polynomial quotient rings.~~
 - [ ] ~~Write tests for polynomial rings and quotient rings.~~
 - [ ] ~~Write alternate show functions for Z that can print the number in hexadecimal and like Python's bytes (printable characters are printed, and hex chars are shown as `\xab`, where ab are the hex digits).~~
@@ -18,4 +21,5 @@ The main purpose of this library is quickly solving CTF problems.
 - [x] Get some Legendre symbols.
 - [ ] Write some pretty printers and corresponding readers but don't make them default because they're too much of a pain.
 - [ ] Rewrite a heap of functions for performance.
+- [ ] Add QuickCheck properties to all of the types.
 - [ ] Create some network helpers analogous to pwntools' `remote(url, port)`.
