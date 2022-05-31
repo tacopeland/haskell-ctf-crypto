@@ -4,10 +4,10 @@ The main purpose of this library is quickly solving CTF problems.
 
 ## To do:
 - [x] Refactor.
-- [ ] Implement Number Theoretic Transform.
+- [x] Implement Number Theoretic Transform.
 - [ ] Rewrite tests.
 - [ ] Use high-performance libraries for things like matrix operations and polynomial multiplication.
-- [ ] Implement polynomial rings.
+- [x] Implement polynomial rings.
 - [x] Implement primality tests (Miller-Rabin).
 - [ ] ~~Implement polynomial quotient rings.~~
 - [ ] ~~Write tests for polynomial rings and quotient rings.~~
