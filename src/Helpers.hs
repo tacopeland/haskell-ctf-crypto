@@ -62,3 +62,14 @@ decomposeEven n = inner (n, 0)
 -- |http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
 powerOf2 :: Integer -> Bool
 powerOf2 a = a .&. (a - 1) == 0
+
+nextPowerOf2 :: Integer -> Integer
+nextPowerOf2 a
+  | a <= 1    = 1
+  | otherwise = 2 ^ (floor (logBase 2 (fromIntegral (a-1))) + 1)
+
+consecutivePowers :: Integer -> [Integer]
+consecutivePowers k = iterate (*k) 1
+
+consecutiveModPowers :: Integer -> Integer -> [Integer]
+consecutiveModPowers k n = iterate ((`mod` n) . (*k)) 1

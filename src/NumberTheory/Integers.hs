@@ -2,6 +2,7 @@
 module NumberTheory.Integers where
 
 import Helpers
+import NumberTheory.Basic
 import NumberTheory.Factor
 import NumberTheory.Modular
 import NumberTheory.Primes
@@ -46,3 +47,33 @@ eulerPhi 1 = 1
 eulerPhi n = product (map (\x -> n - n `div` x) factors) `div` n^(l - 1)
     where factors = nub (factor pollardRhoF (toInteger n))
           l = length factors
+
+ntt :: [Integer] -> Integer -> Integer -> [Integer]
+ntt vec omega modulus = xs
+    where
+        n = toInteger $ length vec
+        omegas i = consecutiveModPowers (mPow omega i modulus) modulus
+        xs = map ((`modSum` modulus) . zipWith (*) vec . omegas) [0..(n-1)]
+
+inverseNtt :: [Integer] -> Integer -> Integer -> [Integer]
+inverseNtt vec omega modulus = xs
+    where
+        n = toInteger $ length vec
+        xs' = ntt vec (mInv omega modulus) modulus
+        xs = map (\x -> modMul x (mInv n modulus) modulus) xs'
+
+-- |There is a primitive nth root of unity in ZZp iff n | p-1.
+-- This assumes there is an nth root of unity.
+primitiveRootOfUnity :: Integer -> Integer -> Maybe Integer
+primitiveRootOfUnity n modulus
+  | n `divides` (modulus-1) =
+    let stdGen = mkStdGen 0xdeadcafe
+        nFacs = nub (factor pollardP1 n)
+        inner gen =
+            let (a, gen') = randomR (2, modulus-1) gen
+             in if mPow a n modulus == 1
+                   && (1 `notElem` map (\i -> mPow a (n `div` i) modulus) nFacs)
+                   then a
+                   else inner gen'
+    in Just $ inner stdGen
+  | otherwise = Nothing
