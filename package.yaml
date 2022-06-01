@@ -30,8 +30,7 @@ library:
     - integer-roots
     - parallel
     - random
-    - split
-    - matrix
+    - factor
 
 tests:
   haskell-ctf-crypto-test:
