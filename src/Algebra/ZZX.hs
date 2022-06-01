@@ -61,7 +61,9 @@ instance Ring ZZX where
     rneg (ZZXCoefficients coeffs) = ZZXCoefficients (map (\x -> -x) coeffs)
     rneg _ = undefined
 
-    rpow p@(ZZXCoefficients coeffs) e' =
+    rpow p@(ZZXCoefficients coeffs) e'
+      | e' == 0 = Just $ ZZXCoefficients [ZZ 1]
+      | e' > 0 =
         let e = fromIntegral e'
             n = toInteger $ degree p * e + 1
             maxCoeff = foldr (\(ZZ x) -> max x) 0 coeffs
@@ -75,10 +77,12 @@ instance Ring ZZX where
             omega = ZZ $ fromJust $ primitiveRootOfUnity n (toInteger modulus)
             pvPoly = nttPoly (padPoly p (fromIntegral n)) omega modulus
             identityPv = ZZXPointValue (replicate (fromIntegral n) (ZZ 1)) omega modulus
-            z = squareAndMultiply (\x y -> x {ys = zipWith (\a b -> modMul a b modulus) (ys x) (ys y)})
+            z = squareAndMultiply (\x y ->
+                x {ys = zipWith (\a b -> modMul a b modulus) (ys x) (ys y)})
                                     identityPv pvPoly e
             shift n p = if n == 0 then p else shift (n-1) (last p : init p)
          in Just $ ZZXCoefficients (shift (e-1) (coefficients $ invNttPoly z))
+      | e' < 0 = Nothing
 
     rpow _ _ = Nothing
 
@@ -88,14 +92,6 @@ instance Ring ZZX where
     {-
        For local use
     -}
-
-squareAndMultiplyCount :: (Integral b) => (a -> a -> a) -> a -> a -> b -> (a, Int)
-squareAndMultiplyCount operation identity base exponent =
-    let s = zipWith (\a e -> if e == 1 then a else identity)
-                (squares operation base)
-                (binexpand exponent)
-     in (foldr operation identity s, length s)
-
 
 nttPoly :: ZZX -> ZZ -> ZZ -> ZZX
 nttPoly poly@(ZZXPointValue {}) _ _ = poly
