@@ -10,7 +10,9 @@ executable {{name}}
   build-depends:
       base ==4.*
     , haskell-ctf-crypto
+    , text
   default-language: Haskell2010
+  default-extensions: OverloadedStrings
 
 {-# START_FILE stack.yaml #-}
 resolver: lts-19.9
@@ -18,7 +20,7 @@ packages:
 - .
 extra-deps:
 - github: tacopeland/haskell-ctf-crypto
-  commit: 91efa7220fe0ea35ef8d0d85fe4634073db3f3d8
+  commit: fae25775c3720070edf05e28b1a14fad46a2e3c6
 - github: gilith/factor
   commit: 482b2eb792ab63a51f2c3a514cdfb0b76f9205a5
 
