@@ -1,0 +1,28 @@
+{-# START_FILE {{name}}.cabal #-}
+name: {{name}}
+version: 0
+build-type: Simple
+cabal-version: >=1.10
+
+executable {{name}}
+  main-is: {{name}}.hs
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base ==4.*
+    , haskell-ctf-crypto
+  default-language: Haskell2010
+
+{-# START_FILE stack.yaml #-}
+resolver: lts-19.9
+packages:
+- .
+extra-deps:
+- github: tacopeland/haskell-ctf-crypto
+  commit: 91efa7220fe0ea35ef8d0d85fe4634073db3f3d8
+- github: gilith/factor
+  commit: 482b2eb792ab63a51f2c3a514cdfb0b76f9205a5
+
+{-# START_FILE {{name}}.hs #-}
+main :: IO ()
+main = do
+    print "It works!"
