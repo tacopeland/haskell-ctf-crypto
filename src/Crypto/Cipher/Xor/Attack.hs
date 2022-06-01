@@ -3,7 +3,7 @@ module Crypto.Cipher.Xor.Attack where
 import Helpers
 import Crypto.Cipher.Xor
 
-import Control.Parallel
+import Control.Parallel.Strategies
 import qualified Data.ByteString as B
 import Data.Char (isPrint, chr, ord)
 import Data.List
@@ -82,12 +82,6 @@ probableKeys ct charset keyLen =
 attackKnownPlaintext :: B.ByteString -> [Word8] -> Integer -> B.ByteString
                       -> [(B.ByteString, B.ByteString)]
 attackKnownPlaintext ct charset keyLen pt =
-    let parMapFilter mapFunc filtFunc [] = []
-        parMapFilter mapFunc filtFunc (x:xs) =
-            let r = mapFunc x in
-            if filtFunc x
-               then r `par` r : parMapFilter mapFunc filtFunc xs
-               else parMapFilter mapFunc filtFunc xs
-     in parMapFilter (\key -> (key, bytesXor key ct))
-            (\key -> B.isInfixOf pt (bytesXor key ct))
-            (probableKeys ct charset keyLen)
+     filter (\(_, out) -> B.isInfixOf pt out) $
+        parMap rpar (\key -> (key, bytesXor key ct))
+                (probableKeys ct charset keyLen)
