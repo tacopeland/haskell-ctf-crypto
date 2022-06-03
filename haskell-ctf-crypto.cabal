@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c5752cf5ed09e9c7d6bc6f476e2940469961ea8cd96a1e8a121d13514754a8f1
+-- hash: 10a5df2b612f37c7152c8063bc46ff88e999ebe49e4f93dc859b33e2a6fc224c
 
 name:           haskell-ctf-crypto
 version:        0.1.0.0
@@ -38,11 +38,14 @@ library
       Algebra.ZZN
       Algebra.ZZP
       Algebra.ZZX
+      Crypto.Cipher.Monoalphabetic
       Crypto.Cipher.Xor
       Crypto.Cipher.Xor.Attack
       Crypto.PublicKey.ElGamal
       Crypto.PublicKey.RSA
+      Crypto.Util.Charset
       Crypto.Util.Encoding
+      Crypto.Util.Langs
       Crypto.Util.List
       Helpers
       NumberTheory.Basic

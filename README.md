@@ -5,11 +5,12 @@ The main purpose of this library is quickly solving CTF problems.
 ## To do:
 - [x] Refactor.
 - [x] Implement Number Theoretic Transform.
+  - [ ] Convert NTT to use FFT.
+- [ ] Make a monoalphabetic cipher solver based on "A Fast Method for the Cryptanalysis of Substitution Ciphers" by Thomas Jakobsen.
 - [ ] Use high-performance libraries for things like matrix operations and polynomial multiplication.
 - [ ] Rewrite tests. Regression testing is key.
   - [ ] Add QuickCheck properties to all of the types.
 - [x] Implement polynomial rings.
-  - [ ] Convert NTT to use FFT.
 - [x] Implement primality tests (Miller-Rabin).
 - [ ] Implement polynomial quotient rings.
 - [ ] ~~Write alternate show functions for Z that can print the number in hexadecimal and like Python's bytes (printable characters are printed, and hex chars are shown as `\xab`, where ab are the hex digits).~~

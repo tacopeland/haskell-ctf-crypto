@@ -12,11 +12,6 @@ import Data.Ord
 import Data.Word
 
 
-asciiPrintable :: [Word8]
-asciiPrintable = map (fromIntegral . ord)
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c"
-
-
     {-
        For finding the key length.
        Based on https://github.com/hellman/xortool
@@ -80,8 +75,8 @@ probableKeys ct charset keyLen =
      in map B.pack (sequence possible)
 
 attackKnownPlaintext :: B.ByteString -> [Word8] -> Integer -> B.ByteString
-                      -> [(B.ByteString, B.ByteString)]
+                     -> [(B.ByteString, B.ByteString)]
 attackKnownPlaintext ct charset keyLen pt =
-     filter (\(_, out) -> B.isInfixOf pt out) $
+    filter (\(_, out) -> B.isInfixOf pt out) $
         parMap rpar (\key -> (key, bytesXor key ct))
-                (probableKeys ct charset keyLen)
+            (probableKeys ct charset keyLen)
