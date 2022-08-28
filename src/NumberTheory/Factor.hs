@@ -54,6 +54,7 @@ pollardRhoF n = inner x1 x1 c gen1
 -- |Takes as input a function that returns a single factor and a number and fully factorizes that number.
 factor :: (Integer -> Integer) -> Integer -> [Integer]
 factor f n
+  | n == 1 = [n]
   | isPrime n = [n]
   | even n = 2 : factor f (n `div` 2)
   | otherwise =

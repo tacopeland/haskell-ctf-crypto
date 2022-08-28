@@ -32,6 +32,7 @@ library:
     - random
     - factor
     - text
+    - hmatrix
 
 tests:
   haskell-ctf-crypto-test:
