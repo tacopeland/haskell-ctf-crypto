@@ -56,17 +56,17 @@ import System.IO
 
 data Response =
     Encoding {
-      type :: String
-      encoded :: String }
+      _type :: String
+      _encoded :: String }
   | Flag {
-      flag :: String }
+      _flag :: String }
   | Error {
-      error :: String }
+      _error :: String }
 
 
 handleLine :: Handle -> IO ()
-handleLine h =
-  in <- hGetLine h
+handleLine h = do
+  inp <- hGetLine h
 
   
 

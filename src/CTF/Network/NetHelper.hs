@@ -1,6 +1,6 @@
 module CTF.Network.NetHelper where
 
-import qualified Data.ByteString as BS
+import Data.ByteString (ByteString(..))
 import Network.Socket
   ( connect, socket, defaultProtocol, getAddrInfo, socketToHandle, addrFamily
   , addrAddress, SocketType(..))

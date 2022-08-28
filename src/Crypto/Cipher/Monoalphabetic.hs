@@ -43,6 +43,11 @@ txtSubstitute :: T.Text -> T.Text -> T.Text -> T.Text
 txtSubstitute pt alpha1 alpha2 = txtSubstituteMap pt (subTable alpha1 alpha2)
 
 
+rot n txt = txtSubstituteMap txt st
+    where lowercase = T.drop n asciiLower `T.append` T.take n asciiLower
+          full = lowercase `T.append` T.toUpper lowercase
+          st = subTable (asciiLower `T.append` asciiUpper) full
+
     {-
        Attacks
     -}

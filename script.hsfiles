@@ -20,7 +20,7 @@ packages:
 - .
 extra-deps:
 - github: tacopeland/haskell-ctf-crypto
-  commit: c7fe517c747292866c68e493052f4c2784076798
+  commit: 765723fa83aabc482cb674094d23d3c0725e6b5e
 - github: gilith/factor
   commit: 482b2eb792ab63a51f2c3a514cdfb0b76f9205a5
 
