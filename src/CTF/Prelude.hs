@@ -13,6 +13,7 @@ import Data.Char (chr)
 import Data.ByteString.Base64 (encodeBase64, decodeBase64Lenient)
 import Data.ByteString (ByteString(..))
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
 import Data.Text (Text(..))
 import qualified Data.Text as T
 
@@ -31,7 +32,7 @@ b64Dec :: ByteString -> ByteString
 b64Dec = decodeBase64Lenient
 
 tPack = T.pack
-bPack = BS.pack
+bPack = BSC.pack
 
 tUnpack = T.unpack
 bUnpack = BS.unpack
