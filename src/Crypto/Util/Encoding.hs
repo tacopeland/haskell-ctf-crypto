@@ -1,4 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
+
+{-| This packs integers in little-endian form by default, but offers
+   big-endian forms of the integer packing function.
+-}
 module Crypto.Util.Encoding where
 
 import qualified Data.ByteString as B
@@ -8,7 +12,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Numeric (readHex, showHex)
 
--- |This can fail if not given a string of hex digits.
+-- |This can fail if not given a string of hex digits. Make this return maybe.
 hexToInteger :: T.Text -> Integer
 hexToInteger hex = fst (head (readHex (T.unpack hex)))
 
@@ -21,11 +25,32 @@ textToInteger = bytesToInteger . T.encodeUtf8
 integerToHex :: Integer -> T.Text
 integerToHex i = T.pack (showHex i "")
 
-integerToBytes :: Integer -> B.ByteString
-integerToBytes n =
+integerLEToBytes :: Integer -> B.ByteString
+integerLEToBytes n =
     let inner n
           | n == 0 = []
           | otherwise = inner (n `div` 256) ++ [chr (fromInteger (n `mod` 256))]
      in C.pack (inner n)
 
-integerToText = T.decodeUtf8 . integerToBytes
+integerBEToBytes :: Integer -> B.ByteString
+integerBEToBytes n =
+    let inner n
+          | n == 0 = []
+          | otherwise = (chr (fromInteger (n `mod` 256))) : (inner (n `div` 256))
+     in C.pack (inner n)
+
+integerLEToText :: Integer -> T.Text
+integerLEToText = T.decodeUtf8 . integerLEToBytes
+
+integerBEToText :: Integer -> T.Text
+integerBEToText = T.decodeUtf8 . integerBEToBytes
+
+
+-- |This packs the integer in little-endian form.
+hexToBytes :: T.Text -> B.ByteString
+hexToBytes = integerLEToBytes . hexToInteger
+
+-- |This packs the integer in little-endian form.
+hexToText :: T.Text -> T.Text
+hexToText = T.decodeUtf8 . hexToBytes
+

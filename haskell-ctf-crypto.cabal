@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c70d96f04229a1ca8545f8616372ed0af955e425bf1b54936ef67833aaf6e92b
+-- hash: 17fd7f76249a11139075dde8e87937e95059fd9e3a3ba645c9d429435c9bad9f
 
 name:           haskell-ctf-crypto
 version:        0.1.0.0
@@ -46,6 +46,8 @@ library
       Crypto.Util.Encoding
       Crypto.Util.Langs
       Crypto.Util.List
+      CTF.Network.NetHelper
+      CTF.Prelude
       Helpers
       NumberTheory.Basic
       NumberTheory.Factor
@@ -58,11 +60,13 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , base64
     , bytestring
     , containers
     , factor
     , hmatrix
     , integer-roots
+    , network
     , parallel
     , random
     , text

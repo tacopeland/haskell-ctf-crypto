@@ -33,6 +33,8 @@ library:
     - factor
     - text
     - hmatrix
+    - base64
+    - network
 
 tests:
   haskell-ctf-crypto-test:
