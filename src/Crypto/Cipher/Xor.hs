@@ -1,6 +1,8 @@
 module Crypto.Cipher.Xor where
 
 import Helpers
+import Crypto.Util.Encoding
+import Crypto.Util.Langs
 
 import Control.Parallel.Strategies
 import Data.Bits
@@ -183,3 +185,15 @@ bruteForceXorSW' ct charset keyLen pt startsWith mostChar k =
      in filter (\(_, out) -> B.isInfixOf pt out) $
             parMap rpar (\key -> ((B.append keyInitial key),
                                     bytesXor (B.append keyInitial key) ct)) keys
+
+matchesXorEnglish :: B.ByteString -> Float
+matchesXorEnglish bs = foldr (\(x, y) -> (+) ((x - y) ^ 2)) 0.0 (zip sortedFreqs sortedEngFreqs)
+    where tFreqs = relFreqTable bs
+          relFreqTable t = map (fmap (\y -> fromIntegral y / fromIntegral (B.length t)))
+                               (freqTable (B.unpack t))
+          sortedFreqs = map snd (sortOn snd tFreqs)
+          sortedEngFreqs = map snd (sortOn snd asciiByteFreqs)
+
+hammingDistance :: B.ByteString -> B.ByteString -> Integer
+hammingDistance a b = toInteger (nDifferences (bytesToBits a) (bytesToBits b))
+    where bytesToBits = binexpand . bytesToInteger

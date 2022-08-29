@@ -16,6 +16,7 @@ import Numeric (readHex, showHex)
 hexToInteger :: T.Text -> Integer
 hexToInteger hex = fst (head (readHex (T.unpack hex)))
 
+-- Little-endian
 bytesToInteger :: B.ByteString -> Integer
 bytesToInteger = B.foldl (\x y -> 256 * x + toInteger y) 0
 
@@ -23,7 +24,8 @@ textToInteger :: T.Text -> Integer
 textToInteger = bytesToInteger . T.encodeUtf8
 
 integerToHex :: Integer -> T.Text
-integerToHex i = T.pack (showHex i "")
+integerToHex i = if odd (T.length res) then T.cons '0' res else res
+    where res = T.pack (showHex i "")
 
 integerLEToBytes :: Integer -> B.ByteString
 integerLEToBytes n =
@@ -49,6 +51,9 @@ integerBEToText = T.decodeUtf8 . integerBEToBytes
 -- |This packs the integer in little-endian form.
 hexToBytes :: T.Text -> B.ByteString
 hexToBytes = integerLEToBytes . hexToInteger
+
+bytesToHex :: B.ByteString -> T.Text
+bytesToHex = integerToHex . bytesToInteger
 
 -- |This packs the integer in little-endian form.
 hexToText :: T.Text -> T.Text

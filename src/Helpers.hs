@@ -22,6 +22,14 @@ binexpand a
   | otherwise = 1 : leftover
   where leftover = binexpand $ a `div` 2
 
+nDifferences :: Eq a => [a] -> [a] -> Int
+nDifferences [] _ = 0
+nDifferences _ [] = 0
+nDifferences (x:xs) (y:ys) = if x /= y then 1 + nDifferences xs ys else nDifferences xs ys
+
+bitlen :: (Integral a) => a -> Int
+bitlen = length . binexpand
+
 -- |Turn a number of the form n into a*2^e. 
 decomposeEven :: (Integral a) => a -> (a, a)
 decomposeEven n = inner (n, 0)
