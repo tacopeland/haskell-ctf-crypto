@@ -4,18 +4,24 @@ module CTF.Prelude
     , bytesToInteger, integerToBytes
     , textToInteger, integerToText
     , hexToBytes, hexToText
-    , chr
+    , chr, ord
     , Text(..), ByteString(..)
     , tPack, bPack, tUnpack, bUnpack
+    , rot
+    , xor
     ) where
 
-import Data.Char (chr)
+import Data.Char (chr, ord)
 import Data.ByteString.Base64 (encodeBase64, decodeBase64Lenient)
 import Data.ByteString (ByteString(..))
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
 import Data.Text (Text(..))
 import qualified Data.Text as T
+
+
+import Crypto.Cipher.Monoalphabetic (rot)
+import Crypto.Cipher.Xor (bytesXor)
 
 import Crypto.Util.Encoding
   ( hexToInteger, integerToHex
@@ -41,6 +47,7 @@ bUnpack = BS.unpack
 integerToBytes = integerLEToBytes
 integerToText = integerLEToText
 
+xor = bytesXor
 
 {-
 hexToInteger :: T.Text -> Integer

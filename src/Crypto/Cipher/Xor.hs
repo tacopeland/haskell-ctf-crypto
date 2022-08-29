@@ -9,6 +9,7 @@ import qualified Data.ByteString.Char8 as C
 import Data.Char (isPrint, chr, ord)
 import Data.List
 import Data.Maybe
+import qualified Data.Map as M
 import Data.Ord
 import Data.Word
 
@@ -71,27 +72,114 @@ guessKeyLength ct maxLen = fst $ head $ calcProbabilities ct maxLen
         For guessing the key.
     -}
 
-probableChar :: B.ByteString -> B.ByteString -> [Word8] -> Bool
-probableChar ct char charset = B.all (`elem` charset) (bytesXor ct char)
+validThreshold :: Float
+validThreshold = 0.95
 
-probableChars :: B.ByteString -> [Word8] -> [Word8]
-probableChars ct charset =
-    filter (\char -> probableChar ct (B.pack [char]) charset) (enumFrom 0 :: [Word8])
+-- If the result of xor(ct, char) meets the validity threshold, this is true.
+possibleChar :: B.ByteString -> Word8 -> [Word8] -> Bool
+possibleChar ct char charset = percentage > validThreshold
+    where filtered = B.filter (`elem` charset) (bytesXor ct (B.pack [char]))
+          percentage = fromIntegral (B.length filtered) / fromIntegral (B.length ct)
 
-probableKeys :: B.ByteString -> [Word8] -> Integer -> [B.ByteString]
-probableKeys ct charset keyLen =
-    let substrs :: B.ByteString -> [B.ByteString]
-        substrs l
+-- Get all single-byte xor keys such that the result is in the right charset.
+possibleChars :: B.ByteString -> [Word8] -> [Word8]
+possibleChars ct charset =
+    filter (\char -> possibleChar ct char charset) (enumFrom 0 :: [Word8])
+
+
+offsetStrs :: B.ByteString -> Int -> [B.ByteString]
+offsetStrs ct len = B.transpose (substrs ct)
+  where substrs l
           | B.length l == 0 = []
-          | otherwise = B.take (fromIntegral keyLen) l
-                            : substrs (B.drop (fromIntegral keyLen) l)
-        ss = B.transpose (substrs ct)
-        possible = map (`probableChars` charset) ss
+          | otherwise = B.take len l
+                            : substrs (B.drop len l)
+
+countBytes :: B.ByteString -> M.Map Word8 Integer
+countBytes = B.foldl (\countMap byte ->
+    M.alter (\jValue ->
+        case jValue of
+          Just value -> Just (value + 1)
+          Nothing -> Just 1
+          ) byte countMap) M.empty
+
+mostCommonBytes :: B.ByteString -> [Word8]
+mostCommonBytes bs =
+    let count = M.toList (countBytes bs)
+        maxFreq = maximum (map snd count)
+     in map fst $ filter ((== maxFreq) . snd) count
+
+
+topKMostCommonBytes :: B.ByteString -> Int -> [Word8]
+topKMostCommonBytes bs k =
+    let count = sortOn snd (M.toList (countBytes bs))
+        lastK = drop (length count - k) count
+     in reverse (map fst lastK)
+
+
+-- Get all possible keys such that the result is in the right charset. (SLOW + BAD)
+possibleKeys :: B.ByteString -> [Word8] -> Integer -> [B.ByteString]
+possibleKeys ct charset keyLen =
+    let ss = offsetStrs ct (fromIntegral keyLen)
+        possible = map (`possibleChars` charset) ss
      in map B.pack (sequence possible)
 
-attackKnownPlaintext :: B.ByteString -> [Word8] -> Integer -> B.ByteString
+probableKeys :: B.ByteString -> [Word8] -> Integer -> Word8 -> [B.ByteString]
+probableKeys ct charset keyLen mostChar =
+    let ss = offsetStrs ct (fromIntegral keyLen)
+        top10 = map (B.pack . ((flip topKMostCommonBytes) 10)) ss
+        probable = map (bytesXor (B.pack [mostChar])) top10
+     in map B.pack (sequence (map B.unpack probable))
+
+
+-- The normal functions generate all possible keys, the prime (') functions
+-- only work properly if there is enough plaintext for basic statistical analysis
+-- to work.
+
+-- PT is the partially known plaintext to search for, if none known use B.empty.
+bruteForceXor :: B.ByteString -> [Word8] -> Integer -> B.ByteString
                      -> [(B.ByteString, B.ByteString)]
-attackKnownPlaintext ct charset keyLen pt =
+bruteForceXor ct charset keyLen pt =
     filter (\(_, out) -> B.isInfixOf pt out) $
         parMap rpar (\key -> (key, bytesXor key ct))
-            (probableKeys ct charset keyLen)
+            (possibleKeys ct charset keyLen)
+
+
+bruteForceXor' :: B.ByteString -> [Word8] -> Integer -> B.ByteString
+                -> Word8 -> [(B.ByteString, B.ByteString)]
+bruteForceXor' ct charset keyLen pt mostChar =
+    filter (\(_, out) -> B.isInfixOf pt out) $
+        parMap rpar (\key -> (key, bytesXor key ct))
+            (probableKeys ct charset keyLen mostChar)
+
+-- SW = startsWith, which is the plaintext that this starts with
+bruteForceXorSW ct charset keyLen pt startsWith =
+    let swLength = B.length startsWith
+        newKeyLen = fromIntegral keyLen - swLength
+        keyInitial = B.take swLength (bytesXor ct startsWith)
+        dropStuff ct
+          | B.null ct = ct
+          | otherwise = B.append front (dropStuff rest')
+            where rest = B.drop swLength ct
+                  front = B.take newKeyLen rest
+                  rest' = B.drop newKeyLen rest
+        newCt = dropStuff ct
+        keys = possibleKeys newCt charset (toInteger newKeyLen)
+     in filter (\(_, out) -> B.isInfixOf pt out) $
+            parMap rpar (\key -> ((B.append keyInitial key),
+                                    bytesXor (B.append keyInitial key) ct)) keys
+
+bruteForceXorSW' ct charset keyLen pt startsWith mostChar =
+    let swLength = B.length startsWith
+        newKeyLen = fromIntegral keyLen - swLength
+        keyInitial = B.take swLength (bytesXor ct startsWith)
+        dropStuff ct
+          | B.null ct = ct
+          | otherwise = B.append front (dropStuff rest')
+            where rest = B.drop swLength ct
+                  front = B.take newKeyLen rest
+                  rest' = B.drop newKeyLen rest
+        newCt = dropStuff ct
+        keys = probableKeys newCt charset (toInteger newKeyLen) mostChar
+     in filter (\(_, out) -> B.isInfixOf pt out) $
+            parMap rpar (\key -> ((B.append keyInitial key),
+                                    bytesXor (B.append keyInitial key) ct)) keys

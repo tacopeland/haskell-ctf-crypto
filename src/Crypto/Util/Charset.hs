@@ -24,7 +24,10 @@ asciiAlnum :: T.Text
 asciiAlnum = T.append asciiAlpha asciiNum
 
 flagChars :: T.Text
-flagChars = T.append asciiAlnum "!@#$%^&*.,-_? "
+flagChars = T.append asciiAlnum "{}!@#$%^&*.,-_? "
+
+allBytes :: [Word8]
+allBytes = enumFrom 0
 
 toW8List :: T.Text -> [Word8]
 toW8List txt = map (fromIntegral . ord) (T.unpack txt)
