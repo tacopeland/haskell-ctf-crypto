@@ -123,10 +123,10 @@ possibleKeys ct charset keyLen =
         possible = map (`possibleChars` charset) ss
      in map B.pack (sequence possible)
 
-probableKeys :: B.ByteString -> [Word8] -> Integer -> Word8 -> [B.ByteString]
-probableKeys ct charset keyLen mostChar =
+probableKeys :: B.ByteString -> [Word8] -> Integer -> Word8 -> Int -> [B.ByteString]
+probableKeys ct charset keyLen mostChar k =
     let ss = offsetStrs ct (fromIntegral keyLen)
-        top10 = map (B.pack . ((flip topKMostCommonBytes) 10)) ss
+        top10 = map (B.pack . ((flip topKMostCommonBytes) k)) ss
         probable = map (bytesXor (B.pack [mostChar])) top10
      in map B.pack (sequence (map B.unpack probable))
 
@@ -145,11 +145,11 @@ bruteForceXor ct charset keyLen pt =
 
 
 bruteForceXor' :: B.ByteString -> [Word8] -> Integer -> B.ByteString
-                -> Word8 -> [(B.ByteString, B.ByteString)]
-bruteForceXor' ct charset keyLen pt mostChar =
+                -> Word8 -> Int -> [(B.ByteString, B.ByteString)]
+bruteForceXor' ct charset keyLen pt mostChar k =
     filter (\(_, out) -> B.isInfixOf pt out) $
         parMap rpar (\key -> (key, bytesXor key ct))
-            (probableKeys ct charset keyLen mostChar)
+            (probableKeys ct charset keyLen mostChar k)
 
 -- SW = startsWith, which is the plaintext that this starts with
 bruteForceXorSW ct charset keyLen pt startsWith =
@@ -168,7 +168,7 @@ bruteForceXorSW ct charset keyLen pt startsWith =
             parMap rpar (\key -> ((B.append keyInitial key),
                                     bytesXor (B.append keyInitial key) ct)) keys
 
-bruteForceXorSW' ct charset keyLen pt startsWith mostChar =
+bruteForceXorSW' ct charset keyLen pt startsWith mostChar k =
     let swLength = B.length startsWith
         newKeyLen = fromIntegral keyLen - swLength
         keyInitial = B.take swLength (bytesXor ct startsWith)
@@ -179,7 +179,7 @@ bruteForceXorSW' ct charset keyLen pt startsWith mostChar =
                   front = B.take newKeyLen rest
                   rest' = B.drop newKeyLen rest
         newCt = dropStuff ct
-        keys = probableKeys newCt charset (toInteger newKeyLen) mostChar
+        keys = probableKeys newCt charset (toInteger newKeyLen) mostChar k
      in filter (\(_, out) -> B.isInfixOf pt out) $
             parMap rpar (\key -> ((B.append keyInitial key),
                                     bytesXor (B.append keyInitial key) ct)) keys

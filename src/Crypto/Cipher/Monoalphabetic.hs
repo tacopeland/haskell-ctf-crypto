@@ -48,6 +48,29 @@ rot n txt = txtSubstituteMap txt st
           full = lowercase `T.append` T.toUpper lowercase
           st = subTable (asciiLower `T.append` asciiUpper) full
 
+-- The closer to zero, the better the match
+matchFreqs :: [(Char, Float)] -> [(Char, Float)] -> Float
+matchFreqs l r = foldr (\(x, y) -> (+) ((x - y) ^ 2)) 0.0 matched
+  where matched = [(snd a, snd b) | a <- l, b <- r, fst a == fst b]
+
+matchesEnglish :: T.Text -> Float
+matchesEnglish t = matchFreqs tFreqs englishCharFreqs
+    where cleanT = T.filter C.isLower (T.toLower t)
+          tFreqs = relFreqTable cleanT
+          relFreqTable t = map (fmap (\y -> fromIntegral y / fromIntegral (T.length t)))
+                               (freqTable (T.unpack t))
+
+-- Whether this is just a substituted English plaintext
+matchesSubstitutedEnglish :: T.Text -> Float
+matchesSubstitutedEnglish t = foldr (\(x, y) -> (+) ((x - y) ^ 2)) 0.0 (zip sortedFreqs sortedEngFreqs)
+    where cleanT = T.filter C.isLower (T.toLower t)
+          tFreqs = relFreqTable cleanT
+          relFreqTable t = map (fmap (\y -> fromIntegral y / fromIntegral (T.length t)))
+                               (freqTable (T.unpack t))
+          sortedFreqs = map snd (L.sortOn snd tFreqs)
+          sortedEngFreqs = map snd (L.sortOn snd englishCharFreqs)
+
+
     {-
        Attacks
     -}
