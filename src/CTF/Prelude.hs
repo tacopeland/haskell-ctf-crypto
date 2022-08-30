@@ -8,7 +8,10 @@ module CTF.Prelude
     , Text(..), ByteString(..)
     , tPack, bPack, tUnpack, bUnpack
     , rot, xor
-    , xgcd, modInv, modMul, modPow
+    , xgcd, divides, modInv, modMul, modPow
+    , module NumberTheory.Integers
+    , module NumberTheory.Factor
+    , module NumberTheory.Primes
     ) where
 
 import Crypto.Cipher.AES (AES256)
@@ -28,8 +31,11 @@ import CTF.Crypto.Util.Encoding
   , textToInteger, integerLEToText, integerBEToText
   , hexToBytes, hexToText
   )
-import NumberTheory.Basic (xgcd)
-import NumberTheory.Modular (modInv, modMul, modPow)
+import NumberTheory.Basic (xgcd, divides)
+import NumberTheory.Integers
+import NumberTheory.Factor
+import NumberTheory.Modular (mInv, modInv, modMul, modPow)
+import NumberTheory.Primes
 
 b64Enc :: ByteString -> Text
 b64Enc = encodeBase64

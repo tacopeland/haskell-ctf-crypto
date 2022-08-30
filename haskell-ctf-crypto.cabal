@@ -70,9 +70,11 @@ library
     , integer-roots
     , network
     , parallel
+    , pem
     , random
     , text
     , utf8-string
+    , x509
   default-language: Haskell2010
 
 test-suite haskell-ctf-crypto-test

@@ -1,11 +1,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Algebra.ZZP (ZZP(..), modSqrt) where
+module Algebra.ZZP (ZZP(..), zzpSqrt) where
 
 import Internal.Helpers
 import NumberTheory.Basic (xgcd)
 import NumberTheory.Factor (factor, pollardRhoF)
 import NumberTheory.Primes (isPrime)
-import NumberTheory.Integers (legendreSymbol, quadraticResidue)
+import NumberTheory.Integers (legendreSymbol, quadraticResidue, modSqrt)
 
 import Algebra.Structure.Group
 import Algebra.Structure.Ring
@@ -124,22 +124,5 @@ instance Num ZZP where
     -}
 
 -- |The Tonelli-Shanks algorithm for calculating square roots in GF(p)
-modSqrt :: ZZP -> [ZZP]
-modSqrt n@(ZZP a p)
-  | legendreSymbol a p /= 1 = []
-  | toInteger p `mod` 4 == 3 =
-    let Just root = rpow (ZZP a p) ((p + 1) `div` 4)
-     in [root, rneg root]
-  | null nonresidues = []
-  | otherwise = inner c r 1
-  where (q, s) = decomposeEven (p - 1)
-        nonresidues = filter (not . flip quadraticResidue p) (map ZZ [2..(toInteger p - 1)])
-        z = head nonresidues
-        Just inv = rinv n
-        Just c = rpow (ZZP z p) q
-        Just r = rpow n ((q + 1) `div` 2)
-        inner c r i
-          | i == s = [r, rneg r]
-          | d == rneg (rid n) = inner (c * c) (r * c) (i + 1)
-          | otherwise = inner (c * c) r (i + 1)
-          where Just d = rpow (r * r * inv) (2^(s - i - 1))
+zzpSqrt :: ZZP -> [ZZP]
+zzpSqrt (ZZP (ZZ a) (ZZ p)) = map (\r -> ZZP (ZZ r) (ZZ p)) (modSqrt a p)

@@ -41,6 +41,28 @@ quadraticResidue a p
   | otherwise       = False
   where s = legendreSymbol a p
 
+
+-- |The Tonelli-Shanks algorithm for calculating square roots in GF(p)
+modSqrt :: Integer -> Integer -> [Integer]
+modSqrt a p
+  | legendreSymbol a p /= 1 = []
+  | p `mod` 4 == 3 =
+    let Just root = modPow a ((p + 1) `div` 4) p
+     in [root, ((-1) * root) `mod` p]
+  | null nonresidues = []
+  | otherwise = inner c r 1
+  where (q, s) = decomposeEven (p - 1)
+        nonresidues = filter (not . flip quadraticResidue p) [2..(toInteger p - 1)]
+        z = head nonresidues
+        Just inv = modInv a p
+        Just c = modPow z q p
+        Just r = modPow a ((q + 1) `div` 2) p
+        inner c r i
+          | i == s = [r, ((-1) * r) `mod` p]
+          | d == (-1) `mod` p = inner (c * c) (r * c) (i + 1)
+          | otherwise = inner (c * c) r (i + 1)
+          where Just d = modPow (r * r * inv) (2^(s - i - 1)) p
+
 -- |n * product (1 - 1/p)
 eulerPhi :: Integer -> Integer
 eulerPhi 1 = 1

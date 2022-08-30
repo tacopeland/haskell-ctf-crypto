@@ -88,4 +88,4 @@ infixl 7 .*
 liftX :: ZZP -> ZZP -> ZZP -> EC
 liftX x a b = EC x y a b
     where y2 = x * x * x + a * x + b
-          y = head (modSqrt y2)
+          y = head (zzpSqrt y2)

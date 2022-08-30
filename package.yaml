@@ -37,8 +37,10 @@ library:
     - network
     - cryptonite
     - utf8-string
+    - pem
     - asn1-encoding
     - asn1-types
+    - x509
 
 tests:
   haskell-ctf-crypto-test:
