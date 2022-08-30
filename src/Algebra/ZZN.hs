@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Algebra.ZZN where
 
-import Helpers
+import Internal.Helpers
 import NumberTheory.Basic
 import NumberTheory.Integers
 

@@ -7,10 +7,11 @@ module CTF.Prelude
     , chr, ord
     , Text(..), ByteString(..)
     , tPack, bPack, tUnpack, bUnpack
-    , rot
-    , xor
+    , rot, xor
+    , xgcd, modInv, modMul, modPow
     ) where
 
+import Crypto.Cipher.AES (AES256)
 import Data.Char (chr, ord)
 import Data.ByteString.Base64 (encodeBase64, decodeBase64Lenient)
 import Data.ByteString (ByteString(..))
@@ -19,17 +20,16 @@ import qualified Data.ByteString.Char8 as BSC
 import Data.Text (Text(..))
 import qualified Data.Text as T
 
-
-import Crypto.Cipher.Monoalphabetic (rot)
-import Crypto.Cipher.Xor (bytesXor)
-
-import Crypto.Util.Encoding
+import CTF.Crypto.Cipher.Monoalphabetic (rot)
+import CTF.Crypto.Cipher.Xor (bytesXor)
+import CTF.Crypto.Util.Encoding
   ( hexToInteger, integerToHex
   , bytesToInteger, integerLEToBytes, integerBEToBytes
   , textToInteger, integerLEToText, integerBEToText
   , hexToBytes, hexToText
   )
-
+import NumberTheory.Basic (xgcd)
+import NumberTheory.Modular (modInv, modMul, modPow)
 
 b64Enc :: ByteString -> Text
 b64Enc = encodeBase64

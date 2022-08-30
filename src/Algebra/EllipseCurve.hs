@@ -1,7 +1,7 @@
 -- |Made to solve CryptoHack's Ellipse Curve Cryptography challenge.
 module Algebra.EllipseCurve (EllipseCurve(..)) where
 
-import Helpers
+import Internal.Helpers
 
 import Algebra.Structure.Group
 import Algebra.Structure.Ring

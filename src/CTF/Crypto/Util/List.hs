@@ -1,4 +1,4 @@
-module Crypto.Util.List where
+module CTF.Crypto.Util.List where
 
 import qualified Data.Map as Map
 

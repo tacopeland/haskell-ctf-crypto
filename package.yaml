@@ -35,6 +35,10 @@ library:
     - hmatrix
     - base64
     - network
+    - cryptonite
+    - utf8-string
+    - asn1-encoding
+    - asn1-types
 
 tests:
   haskell-ctf-crypto-test:

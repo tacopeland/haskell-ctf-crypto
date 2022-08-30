@@ -1,6 +1,6 @@
 module Algebra.ZZX (ZZX(..), degree) where
 
-import Helpers
+import Internal.Helpers
 
 import NumberTheory.Integers
 import NumberTheory.Modular

@@ -1,6 +1,6 @@
 module NumberTheory.Primes (isPrime, coprime, millerRabin) where
 
-import Helpers
+import Internal.Helpers
 import NumberTheory.Basic
 import NumberTheory.Modular
 

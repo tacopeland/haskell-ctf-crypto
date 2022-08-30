@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Algebra.ZZP (ZZP(..), modSqrt) where
 
-import Helpers
+import Internal.Helpers
 import NumberTheory.Basic (xgcd)
 import NumberTheory.Factor (factor, pollardRhoF)
 import NumberTheory.Primes (isPrime)

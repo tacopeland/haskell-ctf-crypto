@@ -1,4 +1,4 @@
-module Crypto.Util.Langs where
+module CTF.Crypto.Util.Langs where
 
 import Numeric.LinearAlgebra
 import Data.Word (Word8(..))

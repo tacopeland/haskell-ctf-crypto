@@ -1,4 +1,4 @@
-module Helpers where
+module Internal.Helpers where
 
 import Data.Bits ((.&.))
 import Data.List

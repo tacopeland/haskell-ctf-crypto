@@ -1,4 +1,4 @@
-module Crypto.PublicKey.RSA where
+module CTF.Crypto.PublicKey.RSA where
 
 import NumberTheory.Basic
 import NumberTheory.Modular

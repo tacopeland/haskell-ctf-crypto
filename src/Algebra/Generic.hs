@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Algebra.Generic where
 
-import Helpers
+import Internal.Helpers
 
 import Algebra.Structure.Group
 import Algebra.Structure.Ring

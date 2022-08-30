@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Crypto.Util.Charset where
+module CTF.Crypto.Util.Charset where
 
 import Data.Char
 import qualified Data.Text as T

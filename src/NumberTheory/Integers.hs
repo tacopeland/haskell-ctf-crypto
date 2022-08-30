@@ -1,7 +1,7 @@
 -- Misc functions
 module NumberTheory.Integers where
 
-import Helpers
+import Internal.Helpers
 import NumberTheory.Basic
 import NumberTheory.Factor
 import NumberTheory.Modular

@@ -1,8 +1,8 @@
-module Crypto.Cipher.Monoalphabetic where
+module CTF.Crypto.Cipher.Monoalphabetic where
 
-import Helpers
-import Crypto.Util.Charset
-import Crypto.Util.Langs
+import Internal.Helpers
+import CTF.Crypto.Util.Charset
+import CTF.Crypto.Util.Langs
 
 import qualified Data.Bifunctor as BF
 import qualified Data.Char as C

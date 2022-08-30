@@ -1,8 +1,8 @@
-module Crypto.Cipher.Xor where
+module CTF.Crypto.Cipher.Xor where
 
-import Helpers
-import Crypto.Util.Encoding
-import Crypto.Util.Langs
+import Internal.Helpers
+import CTF.Crypto.Util.Encoding
+import CTF.Crypto.Util.Langs
 
 import Control.Parallel.Strategies
 import Data.Bits

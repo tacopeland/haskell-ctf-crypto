@@ -8,7 +8,7 @@ module NumberTheory.Modular
     )
     where
 
-import Helpers
+import Internal.Helpers
 import NumberTheory.Basic
 
 import Data.Maybe

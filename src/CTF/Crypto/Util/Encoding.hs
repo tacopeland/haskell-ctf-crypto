@@ -3,7 +3,7 @@
 {-| This packs integers in little-endian form by default, but offers
    big-endian forms of the integer packing function.
 -}
-module Crypto.Util.Encoding where
+module CTF.Crypto.Util.Encoding where
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C

@@ -1,4 +1,4 @@
-module Crypto.PublicKey.ElGamal where
+module CTF.Crypto.PublicKey.ElGamal where
 
 import NumberTheory.Modular
 import Algebra.Structure.Ring
